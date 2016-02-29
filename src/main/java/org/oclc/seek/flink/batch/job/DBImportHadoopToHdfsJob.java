@@ -89,20 +89,20 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
         JobConf conf = new JobConf();
 
         DBConfiguration.configureDB(conf,
-            parameterTool.getRequired("driver"),
-            parameterTool.getRequired("url"),
-            parameterTool.getRequired("user"),
-            parameterTool.getRequired("password"));
+            parameterTool.getRequired("db.driver"),
+            parameterTool.getRequired("db.url"),
+            parameterTool.getRequired("db.user"),
+            parameterTool.getRequired("db.password"));
 
         System.out.println("Job Conf...\n" + conf);
 
         DBInputFormat.setInput(conf,
             DatabaseInputRecord.class,
-            parameterTool.getRequired("table"),
+            parameterTool.getRequired("db.table"),
             null,
             null,
             new String[] {
-            parameterTool.getRequired("fields")
+                parameterTool.getRequired("db.fields")
         });
 
         System.out.println("Job Conf...\n" + conf);
