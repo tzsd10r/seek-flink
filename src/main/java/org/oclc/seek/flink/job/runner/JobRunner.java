@@ -9,7 +9,8 @@
 package org.oclc.seek.flink.job.runner;
 
 import org.oclc.seek.flink.batch.job.DBImportEntryFindJob;
-import org.oclc.seek.flink.batch.job.DBImportHadoopJob;
+import org.oclc.seek.flink.batch.job.DBImportHadoopToHdfsJob;
+import org.oclc.seek.flink.batch.job.DBImportHadoopToKafkaJob;
 import org.oclc.seek.flink.batch.job.DBImportIssnlJob;
 import org.oclc.seek.flink.batch.job.WordCountJob;
 import org.oclc.seek.flink.job.JobContract;
@@ -79,13 +80,15 @@ public class JobRunner {
         s.append("\n");
         s.append(WordCountJob.class.getSimpleName().toLowerCase());
         s.append("\n");
-        s.append(DBImportHadoopJob.class.getSimpleName().toLowerCase());
+        s.append(DBImportHadoopToHdfsJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(DBImportEntryFindJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(DBImportIssnlJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(QueryGeneratorToDbToHdfsJob.class.getSimpleName().toLowerCase());
+        s.append("\n");
+        s.append(DBImportHadoopToKafkaJob.class.getSimpleName().toLowerCase());
         s.append("\n");
 
         System.out.println(s.toString());

@@ -12,7 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.oclc.seek.flink.batch.job.DBImportEntryFindJob;
-import org.oclc.seek.flink.batch.job.DBImportHadoopJob;
+import org.oclc.seek.flink.batch.job.DBImportHadoopToHdfsJob;
+import org.oclc.seek.flink.batch.job.DBImportHadoopToKafkaJob;
 import org.oclc.seek.flink.batch.job.DBImportIssnlJob;
 import org.oclc.seek.flink.batch.job.WordCountJob;
 import org.oclc.seek.flink.job.JobContract;
@@ -32,11 +33,13 @@ public class JobFactory {
         topologies.put(KafkaToConsoleJob.class.getSimpleName().toLowerCase(), KafkaToConsoleJob.class);
         topologies.put(SocketToConsoleJob.class.getSimpleName().toLowerCase(), SocketToConsoleJob.class);
         topologies.put(WordCountJob.class.getSimpleName().toLowerCase(), WordCountJob.class);
-        topologies.put(DBImportHadoopJob.class.getSimpleName().toLowerCase(), DBImportHadoopJob.class);
+        topologies.put(DBImportHadoopToHdfsJob.class.getSimpleName().toLowerCase(), DBImportHadoopToHdfsJob.class);
         topologies.put(DBImportEntryFindJob.class.getSimpleName().toLowerCase(), DBImportEntryFindJob.class);
         topologies.put(DBImportIssnlJob.class.getSimpleName().toLowerCase(), DBImportIssnlJob.class);
         topologies.put(QueryGeneratorToDbToHdfsJob.class.getSimpleName().toLowerCase(),
             QueryGeneratorToDbToHdfsJob.class);
+        topologies.put(DBImportHadoopToKafkaJob.class.getSimpleName().toLowerCase(),
+            DBImportHadoopToKafkaJob.class);
     }
 
     /**

@@ -33,8 +33,8 @@ ext {
     repos = [
         snapshot: [
             url     : "http://snapshots.dev.oclc.org/archiva/repository/snapshots",
-            username: project.snapshotRepoUserName,
-            password: project.snapshotRepoPassword
+            //username: project.snapshotRepoUserName,
+            //password: project.snapshotRepoPassword
         ],
         release : [
             url     : "http://releases.dev.oclc.org/archiva/repository/releases",

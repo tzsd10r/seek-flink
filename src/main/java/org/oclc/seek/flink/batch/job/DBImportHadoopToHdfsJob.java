@@ -31,7 +31,7 @@ import org.oclc.seek.flink.record.DatabaseInputRecord;
 /**
  *
  */
-public class DBImportHadoopJob extends JobGeneric implements JobContract {
+public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
     private Properties props = new Properties();
 
     @Override
