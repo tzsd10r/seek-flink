@@ -56,7 +56,7 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
 
         // Properties properties = new Properties();
         try {
-            props.load(ClassLoader.getSystemResourceAsStream("conf/conf." + env + ".properties"));
+            props.load(ClassLoader.getSystemResourceAsStream("conf/config." + env + ".properties"));
         } catch (Exception e) {
             System.out.println("Failed to load the properties file");
             e.printStackTrace();
