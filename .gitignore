@@ -1,0 +1,18 @@
+# ignore all bin directories
+# matches "bin" in any subfolder
+bin/
+
+# ignore target and build directories
+target/
+build/
+
+# ignore all files ending with ~
+*~ 
+
+# ignore hidden directories and files
+.gradle/
+.settings/
+.classpath
+.project
+
+

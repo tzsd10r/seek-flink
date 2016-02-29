@@ -1,0 +1,190 @@
+/*
+ *
+ *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ *
+ *  OCLC proprietary information: the enclosed materials contain
+ *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ *  any part to any third party or used by any person for any purpose, without written
+ *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
+ *
+ */
+buildscript {
+    repositories { mavenCentral() }
+    //    dependencies { classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.1.RELEASE' }
+}
+
+plugins { id 'com.github.johnrengelman.shadow' version '1.2.3' }
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+//apply plugin: 'spring-boot'
+//apply plugin: 'pmd'
+//apply plugin: 'findbugs'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+version = '1.0'
+
+//sourceSets.itest.java.srcDirs = ['src/itest/java']
+
+buildDir = 'target'
+
+ext {
+    repos = [
+        snapshot: [
+            url     : "http://snapshots.dev.oclc.org/archiva/repository/snapshots",
+            username: project.snapshotRepoUserName,
+            password: project.snapshotRepoPassword
+        ],
+        release : [
+            url     : "http://releases.dev.oclc.org/archiva/repository/releases",
+            //username: project.releaseRepoUserName,
+            //password: project.releaseRepoPassword
+        ],
+        legacy: [
+            url: "http://snapshots.dev.oclc.org/archiva/repository/internal"
+        ]
+    ]
+}
+
+repositories {
+    mavenLocal()
+    repos.each { repoName, repo ->
+        maven {
+            name repoName
+            url repo.url
+        }
+    }
+    mavenCentral()
+}
+
+/* This configuration does not work because it removes the dependency from the Gradle Dependencies in
+ * the Eclipse IDE, causing compile errors. 
+ */
+//configurations {
+//    /* We don't want the storm-core dependency in our uber jar */
+//    runtime.exclude module: 'storm-core'
+//}
+
+dependencies {
+    // groovy
+    compile 'org.codehaus.groovy:groovy-all:2.4.3'
+
+    // Spring
+    //    compile( group:'org.springframework.boot', name: 'spring-boot-starter' )
+    //    compile 'org.springframework:spring-beans:4.2.0.RELEASE'
+    //    compile 'org.springframework:spring-context:4.2.0.RELEASE'
+    //    compile( group:'com.fasterxml.jackson.core', name: 'jackson-databind' )
+
+    // commons
+    compile 'commons-collections:commons-collections:3.2'
+    compile 'commons-io:commons-io:2.4'
+    compile 'commons-beanutils:commons-beanutils:1.9.2'
+    compile 'org.apache.commons:commons-lang3:3.4'
+    compile 'org.apache.commons:commons-pool2:2.4.2'
+
+    // solr
+    compile 'org.apache.solr:solr-solrj:5.3.1'
+
+    // flink
+    compile ('org.apache.flink:flink-streaming-java:0.10.2') 
+    compile ('org.apache.flink:flink-core:0.10.2') 
+    compile ('org.apache.flink:flink-clients:0.10.2') 
+    compile ('org.apache.flink:flink-java:0.10.2')
+    compile ('org.apache.flink:flink-connector-kafka:0.10.2') 
+    compile ('org.apache.flink:flink-connector-filesystem:0.10.2')
+    compile ('org.apache.flink:flink-hadoop-compatibility:0.10.2')
+    compile ('org.apache.flink:flink-jdbc:0.10.2')
+
+    // kafka
+    compile ('org.apache.kafka:kafka_2.10:0.8.2.0') 
+    
+    // gson
+    compile ('com.google.code.gson:gson:2.6.1')
+
+    // mysql
+    runtime 'mysql:mysql-connector-java:5.1.34'
+
+    // json
+    compile 'com.googlecode.json-simple:json-simple:1.1'
+
+    // logging
+    //compile 'org.apache.logging.log4j:log4j-api:2.3'
+    //compile 'org.apache.logging.log4j:log4j-core:2.3'
+    compile 'ch.qos.logback:logback-core:1.1.2'
+    compile 'ch.qos.logback:logback-classic:1.1.2'
+    // Add the log4j -> sfl4j (-> logback) bridge into the classpath... Hadoop logs to log4j
+    compile 'org.slf4j:log4j-over-slf4j:1.7.7'
+
+    // test
+    testCompile 'org.easymock:easymock:3.4'
+    testCompile 'junit:junit:4.12'
+    compile 'org.apache.derby:derby:10.10.1.1'
+
+    // plugins
+    compile 'com.google.code.findbugs:findbugs:3.0.1'
+}
+
+//findbugs { ignoreFailures = true }
+
+//pmd { ignoreFailures = true }
+
+eclipse { classpath { downloadJavadoc = true } }
+
+defaultTasks 'clean', 'build', 'shadowJar'
+
+
+//springBoot { mainClass = 'org.oclc.seek.flink.kafka.KafkaToHdfs' }
+
+/*
+ * The best way to generate a uber jar and avoid any conflicts during runtime (such as duplicate files)
+ * is to exclude any dependencies that should be in 'provided' scope
+ */
+//shadowJar {
+//    baseName = project.name + '-uber'
+//    classifier = ''
+//    // exclude the dependency that the storm installation already has as dependency
+//    dependencies {
+//        exclude(group('org.apache.hadoop'))
+//        exclude(group('org.apache.hbase'))
+//    }
+//    mergeServiceFiles()
+//}
+
+shadowJar {
+    baseName = project.name + '-uber'
+    classifier = ''
+    manifest {
+        attributes 'Implementation-Title': 'Storm Health Check',
+        'Implementation-Version': version,
+        'Main-Class': 'org.oclc.seek.flink.job.runner.JobRunner'
+    }
+    mergeServiceFiles()
+}
+
+configurations {
+    /* We don't want the following dependencies in our shadowJar */
+    all*.exclude group: 'org.apache.hadoop'
+    all*.exclude group: 'org.apache.hbase'
+    runtime.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    runtime.exclude group: 'log4j', module: 'log4j'
+    compile.transitive = true
+    testCompile.transitive = true
+}
+
+//jar {
+//    manifest {
+//        attributes 'Implementation-Title': 'seek-flink',
+//        'Implementation-Version': version,
+//        'Built-By': System.getProperty('user.name'),
+//        'Built-Date': new Date(),
+//        'Built-JDK': System.getProperty('java.version'),
+//        'Main-Class': 'org.oclc.seek.flink.job.runner.JobRunner'
+//    }
+//}
+
+test {
+    testLogging {  // Show that tests are run in the command-line output
+        events 'started', 'passed' }
+    systemProperties 'property': 'value'
+}
