@@ -19,7 +19,7 @@ class KafkaToHdfsITest {
 
     @Before
     public void setup() {
-        kafkaToHdfsJob = new KafkaToHdfsJob('config/config.ilab.properties')
+        kafkaToHdfsJob = new KafkaToHdfsJob('conf/config.ilab.properties')
     }
 
     @Test

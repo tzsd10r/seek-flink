@@ -9,52 +9,11 @@
 package org.oclc.seek.flink.record;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  *
  */
 public interface EntityContract extends Serializable {
-    /**
-     * @return an instance of {@link EntityConfiguration}
-     */
-    // public EntityConfiguration configuration();
-
-    /**
-     *
-     */
-    // public interface EntityConfiguration extends Serializable {
-    // /**
-    // * @return the class name of the db driver
-    // */
-    // public String driver();
-    //
-    // /**
-    // * @return a password for the db
-    // */
-    // public String password();
-    //
-    // /**
-    // * @return a connection url for the db
-    // */
-    // public String url();
-    //
-    // /**
-    // * @return a user name
-    // */
-    // public String user();
-    //
-    // /**
-    // * @return a list of fields/column names
-    // */
-    // public List<String> fields();
-    //
-    // /**
-    // * @return a table name
-    // */
-    // public String table();
-    // }
-
     /**
      *
      */

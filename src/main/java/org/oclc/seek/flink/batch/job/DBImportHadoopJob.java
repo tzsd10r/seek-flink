@@ -56,25 +56,12 @@ public class DBImportHadoopJob extends JobGeneric implements JobContract {
 
         // Properties properties = new Properties();
         try {
-            props.load(ClassLoader.getSystemResourceAsStream("config/config." + env + ".properties"));
+            props.load(ClassLoader.getSystemResourceAsStream("conf/conf." + env + ".properties"));
         } catch (Exception e) {
             System.out.println("Failed to load the properties file");
             e.printStackTrace();
             throw new RuntimeException("Failed to load the properties file");
         }
-
-        // props.put("zookeeper.connect",
-        // "ilabhddb03dxdu.dev.oclc.org:9011,ilabhddb04dxdu.dev.oclc.org:9011,ilabhddb05dxdu.dev.oclc.org:9011");
-        // props.put("hdfs.folder", "/user/seabrae/flink");
-        // props.put("hdfs.host", "hdfs://ilabhddb02dxdu.dev.oclc.org:9008");
-        //
-        // props.put("driver", "com.mysql.jdbc.Driver");
-        // props.put("table", "entry_find");
-        // props.put("fields", "owner_institution, collection_uid");
-        // props.put("url", "jdbc:mysql://wmsdev-vip3.ent.oclc.org:3306/kbwc_seek");
-        // props.put("user", "kbwc_seek");
-        // props.put("password", "kbwc_seek");
-        // props.put("conditions", "limit 100");
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }

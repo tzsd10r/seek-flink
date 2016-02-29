@@ -88,8 +88,8 @@ public class KafkaToConsoleJob implements JobContract {
     public static void main(final String[] args) throws Exception {
         String configFile;
         if (args.length == 0) {
-            configFile = "config/config.local.properties";
-            System.out.println("Missing input : config file location, using default: " + configFile);
+            configFile = "conf/conf.local.properties";
+            System.out.println("Missing input : conf file location, using default: " + configFile);
         } else {
             configFile = args[0];
         }

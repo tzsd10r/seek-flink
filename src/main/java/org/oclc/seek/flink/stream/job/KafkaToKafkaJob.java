@@ -38,12 +38,6 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract {
      *
      */
     public KafkaToKafkaJob() {
-        props.put("group.id", "seek-kafka");
-        props.put("zookeeper.connect",
-            "ilabhddb03dxdu.dev.oclc.org:9011,ilabhddb04dxdu.dev.oclc.org:9011,ilabhddb05dxdu.dev.oclc.org:9011");
-        props.put("kafka.topic.source", "entry-find-queries");
-        props.put("kafka.topic.sink", "entry-find-results");
-        props.put("bootstrap.servers", "ilabhddb03dxdu:9077,ilabhddb04dxdu:9077,ilabhddb05dxdu:9077");
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }
@@ -94,8 +88,8 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract {
     public static void main(final String[] args) throws Exception {
         String configFile;
         if (args.length == 0) {
-            configFile = "config/config.prod.properties";
-            System.out.println("Missing input : config file location, using default: " + configFile);
+            configFile = "conf/conf.prod.properties";
+            System.out.println("Missing input : conf file location, using default: " + configFile);
         } else {
             configFile = args[0];
         }

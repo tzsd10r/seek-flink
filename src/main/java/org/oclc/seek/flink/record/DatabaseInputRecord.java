@@ -26,11 +26,11 @@ import com.google.gson.Gson;
  *
  */
 public class DatabaseInputRecord implements Writable, DBWritable {
-    private String driver = "com.mysql.jdbc.Driver";
-    private String url = "jdbc:mysql://wmsdev-vip3.ent.oclc.org:3306/kbwc_seek";
-    private String user = "kbwc_seek";
-    private String password = "kbwc_seek";
-    private String table = "entry_find";
+    private String driver;
+    private String url;
+    private String user;
+    private String password;
+    private String table;
     private String[] fields = new String[] {
         "owner_institution", "collection_uid"
     };

@@ -31,10 +31,6 @@ public abstract class JobGeneric implements JobContract {
     @Override
     public void init() {
         Properties props = new Properties();
-        props.put("zookeeper.connect",
-            "ilabhddb03dxdu.dev.oclc.org:9011,ilabhddb04dxdu.dev.oclc.org:9011,ilabhddb05dxdu.dev.oclc.org:9011");
-        props.put("hdfs.folder", "/user/seabrae/flink");
-        props.put("hdfs.host", "hdfs://ilabhddb02dxdu.dev.oclc.org:9008");
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }

@@ -45,18 +45,6 @@ public class DBImportIssnlJob extends JobGeneric implements JobContract {
      */
     @Override
     public void init() {
-        props.put("zookeeper.connect",
-            "ilabhddb03dxdu.dev.oclc.org:9011,ilabhddb04dxdu.dev.oclc.org:9011,ilabhddb05dxdu.dev.oclc.org:9011");
-        props.put("hdfs.folder", "/user/seabrae/flink");
-        props.put("hdfs.host", "hdfs://ilabhddb02dxdu.dev.oclc.org:9008");
-
-        props.put("driver", "com.mysql.jdbc.Driver");
-        props.put("table", "issnl");
-        props.put("fields", "issn, linking_issn");
-        props.put("url", "jdbc:mysql://wmsdev-vip3.ent.oclc.org:3306/kbwc_seek");
-        props.put("user", "kbwc_seek");
-        props.put("password", "kbwc_seek");
-        props.put("conditions", "");
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }
