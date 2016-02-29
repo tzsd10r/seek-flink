@@ -39,9 +39,6 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
         props.put("query", query);
     }
 
-    /**
-     *
-     */
     @Override
     public void init() {
         String env = System.getProperty("environment");
@@ -134,7 +131,7 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
          * send records to hdfs
          */
         records
-        .writeAsText("hdfs:///" + parameterTool.get("hdfs.folder") + "/result.txt", WriteMode.OVERWRITE)
+        .writeAsText("hdfs:///" + parameterTool.get("hdfs.folder") + "/result", WriteMode.OVERWRITE)
         .name("hdfs");
 
         // Setup Hadoop’s TextOutputFormat
