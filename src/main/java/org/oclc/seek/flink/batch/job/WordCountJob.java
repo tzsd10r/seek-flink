@@ -10,6 +10,7 @@ package org.oclc.seek.flink.batch.job;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Properties;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -19,7 +20,9 @@ import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.hadoop.mapreduce.HadoopInputFormat;
 import org.apache.flink.api.java.hadoop.mapreduce.HadoopOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.hadoopcompatibility.mapred.HadoopMapFunction;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -40,6 +43,39 @@ import org.oclc.seek.flink.job.JobGeneric;
  *
  */
 public class WordCountJob extends JobGeneric implements JobContract {
+    private Properties props = new Properties();
+
+    @Override
+    public void init() {
+        // ClassLoader cl = ClassLoader.getSystemClassLoader();
+        //
+        // URL[] urls = ((URLClassLoader)cl).getURLs();
+        //
+        // for(URL url: urls){
+        // System.out.println(url.getFile());
+        // }
+
+        String env = System.getProperty("environment");
+        String test = System.getProperty("test");
+        String configFile = "conf/config." + env + ".properties";
+
+        if (test != null) {
+            configFile = "config.test.properties";
+        }
+
+        System.out.println("Using this config file... [" + configFile + "]");
+
+        try {
+            props.load(ClassLoader.getSystemResourceAsStream(configFile));
+        } catch (Exception e) {
+            System.out.println("Failed to load the properties file... [" + configFile + "]");
+            e.printStackTrace();
+            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
+        }
+
+        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+    }
+
     @Override
     public void execute() throws Exception {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -48,7 +84,7 @@ public class WordCountJob extends JobGeneric implements JobContract {
         Job job = Job.getInstance();
         HadoopInputFormat<LongWritable, Text> hadoopInputFormat = new HadoopInputFormat<LongWritable, Text>(
             new TextInputFormat(), LongWritable.class, Text.class, job);
-        FileInputFormat.addInputPath(job, new Path("/user/seabrae/sandbox/files/input/wordcount-sample-data.txt"));
+        FileInputFormat.addInputPath(job, new Path(parameterTool.getRequired("hdfs.wordcount.source")));
 
         // 1. Create a Flink job
         // 2. Read data using the Hadoop FileInputFormat
@@ -74,13 +110,18 @@ public class WordCountJob extends JobGeneric implements JobContract {
         HadoopOutputFormat<Text, IntWritable> hadoopOutputFormat = new HadoopOutputFormat<Text, IntWritable>(
             new TextOutputFormat<Text, IntWritable>(), job);
 
+        Configuration conf = hadoopOutputFormat.getConfiguration();
+
         // set the value for both, since this test is being executed with both types (hadoop1 and hadoop2 profile)
-        hadoopOutputFormat.getConfiguration().set("mapreduce.output.textoutputformat.separator", " : ");
-        hadoopOutputFormat.getConfiguration().set("mapred.textoutputformat.separator", " : ");
+        conf.set("mapreduce.output.textoutputformat.separator", " : ");
+        conf.set("mapred.textoutputformat.separator", " : ");
+
+        conf.writeXml(System.out);
 
         // Build path to output file
         String millis = Long.toString(DateUtils.toCalendar(new Date()).getTimeInMillis());
-        String filename = "/user/seabrae/sandbox/files/output/wordcount-sample-data-" + millis + ".txt";
+        String filename = parameterTool.getRequired("hdfs.wordcount.output");
+
         FileOutputFormat.setOutputPath(job, new Path(filename));
 
         // Emit data using the Hadoop Output Format

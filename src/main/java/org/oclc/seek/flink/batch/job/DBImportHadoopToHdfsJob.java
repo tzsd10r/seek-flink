@@ -8,8 +8,6 @@
 
 package org.oclc.seek.flink.batch.job;
 
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Properties;
 
 import org.apache.flink.api.common.ExecutionConfig;
@@ -110,7 +108,6 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
         conf.setNumTasksToExecutePerJvm(1);
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 5));
         // conf.writeXml(System.out);
-
 
         /*
          * get records from database

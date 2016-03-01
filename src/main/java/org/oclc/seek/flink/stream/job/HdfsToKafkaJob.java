@@ -16,17 +16,16 @@ import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.record.DatabaseInputRecord;
 import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 
 /**
  *
  */
-public class HdfsToKafka extends JobGeneric implements JobContract {
+public class HdfsToKafkaJob extends JobGeneric implements JobContract {
     private Properties props = new Properties();
 
     @Override
@@ -59,21 +58,18 @@ public class HdfsToKafka extends JobGeneric implements JobContract {
     public void execute() throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // env.getConfig().disableSysoutLogging();
-
-        // use system default value
-        env.getConfig().setNumberOfExecutionRetries(-1);
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
-
         // create a checkpoint every 5 secodns
-        env.enableCheckpointing(5000);
+        // env.enableCheckpointing(5000);
 
-        env.readFileStream("hdfs:///" + parameterTool.get("hdfs.folder") + "/result", 5000, WatchType.ONLY_NEW_FILES)
-        .map(new RichMapFunction<String, String>() {
+        // env.readFileStream("hdfs:///" + parameterTool.get("hdfs.folder") + "/result", 5000,
+        // WatchType.ONLY_NEW_FILES)
+
+        DataStream<String> text = env.readTextFile("hdfs:///" + parameterTool.getRequired("hdfs.wordcount.source"));
+
+        text.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
             private LongCounter recordCount = new LongCounter();
 
@@ -91,6 +87,10 @@ public class HdfsToKafka extends JobGeneric implements JobContract {
         }).name("json-records")
         .addSink(new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
         .name("kafka");
+
+        // transformed.writeAsText("hdfs:///" + parameterTool.getRequired("hdfs.wordcount.output"));
+
+        // env.execute("Wordcount Streaming");
 
         env.execute("Reads from HDFS and writes to Kafka");
     }
