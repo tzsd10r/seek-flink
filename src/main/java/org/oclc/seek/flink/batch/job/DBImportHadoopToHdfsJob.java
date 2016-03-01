@@ -103,8 +103,8 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
             new HadoopInputFormat<LongWritable, DatabaseInputRecord>(
                 new DBInputFormat(), LongWritable.class, DatabaseInputRecord.class, conf);
 
-        conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
-        conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
+        // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
+        // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
         conf.setNumTasksToExecutePerJvm(1);
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 5));
         // conf.writeXml(System.out);
@@ -138,7 +138,7 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
          * send records to hdfs
          */
         records
-        .writeAsText("hdfs:///" + parameterTool.get("hdfs.folder") + "/result", WriteMode.OVERWRITE)
+            .writeAsText(parameterTool.get("hdfs.db.output"), WriteMode.OVERWRITE)
         .name("hdfs");
 
         // Setup Hadoop’s TextOutputFormat
