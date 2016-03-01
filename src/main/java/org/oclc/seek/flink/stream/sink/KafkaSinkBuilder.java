@@ -12,7 +12,7 @@ import java.util.Properties;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
-import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
+import org.oclc.seek.flink.stream.job.StringSerializerSchema;
 
 /**
  *
@@ -27,7 +27,7 @@ public class KafkaSinkBuilder {
         "unchecked", "rawtypes"
     })
     public SinkFunction<String> build(final String topic, final Properties properties) {
-        return new FlinkKafkaProducer(topic, new SimpleStringSchema(), properties);
+        return new FlinkKafkaProducer(topic, new StringSerializerSchema(), properties);
 
     }
 }

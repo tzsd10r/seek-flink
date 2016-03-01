@@ -13,9 +13,13 @@ import java.net.URLClassLoader;
 import java.util.Properties;
 
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
+import org.apache.flink.streaming.util.serialization.DeserializationSchema;
+import org.apache.flink.streaming.util.serialization.SerializationSchema;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
@@ -79,8 +83,9 @@ public class HdfsToKafka extends JobGeneric implements JobContract {
             }
         }).name("json-records")
         .addSink(new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
-            .name("kafka");
+        .name("kafka");
 
         env.execute("Generates Queries... executes them and writes results to HDFS");
     }
+
 }
