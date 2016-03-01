@@ -12,16 +12,15 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Properties;
 
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.common.accumulators.LongCounter;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
-import org.apache.flink.streaming.util.serialization.DeserializationSchema;
-import org.apache.flink.streaming.util.serialization.SerializationSchema;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.record.DatabaseInputRecord;
 import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 
 /**
@@ -74,18 +73,26 @@ public class HdfsToKafka extends JobGeneric implements JobContract {
         env.enableCheckpointing(5000);
 
         env.readFileStream("hdfs:///" + parameterTool.get("hdfs.folder") + "/result", 5000, WatchType.ONLY_NEW_FILES)
-        .map(new MapFunction<String, String>() {
+        .map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
+            private LongCounter recordCount = new LongCounter();
+
+            @Override
+            public void open(final Configuration parameters) throws Exception {
+                super.open(parameters);
+                getRuntimeContext().addAccumulator("recordCount", recordCount);
+            }
 
             @Override
             public String map(final String value) throws Exception {
+                recordCount.add(1L);
                 return value;
             }
         }).name("json-records")
         .addSink(new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
         .name("kafka");
 
-        env.execute("Generates Queries... executes them and writes results to HDFS");
+        env.execute("Reads from HDFS and writes to Kafka");
     }
 
 }
