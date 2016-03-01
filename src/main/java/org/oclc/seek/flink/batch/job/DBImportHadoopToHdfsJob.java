@@ -44,17 +44,16 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
+        // ClassLoader cl = ClassLoader.getSystemClassLoader();
+        //
+        // URL[] urls = ((URLClassLoader)cl).getURLs();
+        //
+        // for(URL url: urls){
+        // System.out.println(url.getFile());
+        // }
+
         String env = System.getProperty("environment");
         String test = System.getProperty("test");
-
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader)cl).getURLs();
-
-        for(URL url: urls){
-            System.out.println(url.getFile());
-        }
-
         String configFile = "conf/config." + env + ".properties";
 
         if (test != null) {
@@ -110,7 +109,7 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
         conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
         conf.setNumTasksToExecutePerJvm(1);
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 5));
-        conf.writeXml(System.out);
+        // conf.writeXml(System.out);
 
 
         /*
