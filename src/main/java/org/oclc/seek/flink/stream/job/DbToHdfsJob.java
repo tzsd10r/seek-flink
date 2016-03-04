@@ -107,11 +107,12 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 6));
 
-        // DataStream<Tuple2<LongWritable, DatabaseInputRecord>> rawRecords =
-        DataStream<String> jsonRecords = env.createInput(hadoopInputFormat)// .rebalance()
-            // ;
-            // DataStream<String> jsonRecords =
-            // rawRecords
+        DataStream<Tuple2<LongWritable, DatabaseInputRecord>> rawRecords = env.createInput(hadoopInputFormat);
+
+        // DataStream<String> jsonRecords = env.createInput(hadoopInputFormat)// .rebalance()
+        // ;
+        DataStream<String> jsonRecords =
+            rawRecords
             .map(new RichMapFunction<Tuple2<LongWritable, DatabaseInputRecord>, String>() {
                 private static final long serialVersionUID = 1L;
                 private LongCounter recordCount = new LongCounter();
