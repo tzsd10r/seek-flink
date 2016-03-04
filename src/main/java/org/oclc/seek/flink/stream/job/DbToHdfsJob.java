@@ -103,11 +103,12 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
         // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
-        conf.setNumTasksToExecutePerJvm(1);
-        conf.setNumMapTasks(parameterTool.getInt("map.tasks", 5));
+        // conf.setNumTasksToExecutePerJvm(1);
+
+        conf.setNumMapTasks(parameterTool.getInt("map.tasks", 6));
 
         // DataStream<Tuple2<LongWritable, DatabaseInputRecord>> rawRecords =
-        DataStream<String> jsonRecords = env.createInput(hadoopInputFormat).rebalance()
+        DataStream<String> jsonRecords = env.createInput(hadoopInputFormat)// .rebalance()
             // ;
             // DataStream<String> jsonRecords =
             // rawRecords
@@ -130,9 +131,9 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             }).name("build db record");
         // .returns(String.class).rebalance();
 
-        jsonRecords.addSink(
-            new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
-            .name("kafka");
+        // jsonRecords.addSink(
+        // new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
+        // .name("kafka");
 
         jsonRecords.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
         .name("hdfs");;
@@ -167,8 +168,11 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        new SocketToConsoleJob().execute(env);
+        System.setProperty("environment", "test");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DbToHdfsJob job = new DbToHdfsJob();
+        job.init();
+        job.execute(env);
     }
 }
