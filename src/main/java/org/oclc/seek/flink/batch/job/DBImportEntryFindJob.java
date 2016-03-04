@@ -24,15 +24,14 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.batch.source.JDBCSource;
-import org.oclc.seek.flink.job.JobContract;
-import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.job.BatchJobGeneric;
 
 import com.google.gson.Gson;
 
 /**
  *
  */
-public class DBImportEntryFindJob extends JobGeneric implements JobContract {
+public class DBImportEntryFindJob extends BatchJobGeneric {
     private Properties props = new Properties();
 
     @Override
@@ -49,8 +48,8 @@ public class DBImportEntryFindJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final ExecutionEnvironment env) throws Exception {
+        // ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         env.getConfig().setNumberOfExecutionRetries(-1);
         env.getConfig().setParallelism(2);

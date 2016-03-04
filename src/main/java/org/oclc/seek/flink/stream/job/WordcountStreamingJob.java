@@ -57,8 +57,8 @@ public class WordcountStreamingJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> text = env.readTextFile(parameterTool.getRequired("hdfs.wordcount.source"));
 
         DataStream<Tuple2<String, Integer>> transformed = text.flatMap(new Tokenizer()).keyBy(0).sum(1);

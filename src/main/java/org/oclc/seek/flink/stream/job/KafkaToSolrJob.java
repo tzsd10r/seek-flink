@@ -58,8 +58,8 @@ public class KafkaToSolrJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);

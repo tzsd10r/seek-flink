@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DatabaseInputRecord;
+import org.oclc.seek.flink.stream.sink.HdfsSink;
 import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 
 /**
@@ -63,8 +64,8 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         // env.getConfig().disableSysoutLogging();
 
@@ -133,8 +134,8 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
             .name("kafka");
 
-        // records.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
-        // .name("hdfs");;
+        jsonRecords.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
+        .name("hdfs");;
 
         env.execute("Queries the DB and drops results on Kafka");
     }
@@ -159,5 +160,15 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
         public void cancel() {
             running = false;
         }
+    }
+
+    /**
+     * @param args
+     * @throws Exception
+     */
+    public static void main(final String[] args) throws Exception {
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        new SocketToConsoleJob().execute(env);
     }
 }

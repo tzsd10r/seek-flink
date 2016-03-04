@@ -8,6 +8,7 @@
 
 package org.oclc.seek.flink.job.runner;
 
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.batch.job.DBImportEntryFindJob;
 import org.oclc.seek.flink.batch.job.DBImportHadoopToHdfsJob;
 import org.oclc.seek.flink.batch.job.DBImportIssnlJob;
@@ -40,7 +41,8 @@ public class JobRunner {
     public void run(final String topologyName, final String query) {
         try {
             JobContract jobContract = JobFactory.get(topologyName, query);
-            jobContract.execute();
+            StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+            jobContract.execute(env);
         } catch (InstantiationException | IllegalAccessException e) {
             System.out.println("bad topology requested...");
             System.out.println(e.getMessage());

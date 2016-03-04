@@ -27,14 +27,13 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapred.lib.db.DBInputFormat;
-import org.oclc.seek.flink.job.JobContract;
-import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.job.BatchJobGeneric;
 import org.oclc.seek.flink.record.DatabaseInputRecord;
 
 /**
  *
  */
-public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
+public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
     private Properties props = new Properties();
 
     @Override
@@ -69,8 +68,8 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final ExecutionEnvironment env) throws Exception {
+        // ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         ExecutionConfig config = env.getConfig();
 
         System.out.println("Configuration...\n" + config);
@@ -135,7 +134,7 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
          * send records to hdfs
          */
         records
-            .writeAsText(parameterTool.get("hdfs.db.output"), WriteMode.NO_OVERWRITE)
+        .writeAsText(parameterTool.get("hdfs.db.output"), WriteMode.NO_OVERWRITE)
         .name("hdfs");
 
         // Setup Hadoop’s TextOutputFormat

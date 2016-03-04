@@ -29,22 +29,7 @@ public class SocketToConsoleJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        execute(false);
-    }
-
-    /**
-     * @param local
-     * @throws Exception
-     */
-    public void execute(final boolean local) throws Exception {
-        StreamExecutionEnvironment env;
-        if (local) {
-            env = StreamExecutionEnvironment.createLocalEnvironment();
-        } else {
-            env = StreamExecutionEnvironment.getExecutionEnvironment();
-        }
-
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
         DataStream<Tuple2<String, Integer>> stream = env.socketTextStream("localhost", 8989)
             .flatMap(new Splitter()).keyBy(0).timeWindow(Time.seconds(5)).sum(1);
 
@@ -75,6 +60,8 @@ public class SocketToConsoleJob extends JobGeneric implements JobContract {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        new SocketToConsoleJob().execute(false);
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        new SocketToConsoleJob().execute(env);
     }
 }

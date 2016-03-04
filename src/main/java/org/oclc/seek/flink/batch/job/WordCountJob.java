@@ -36,13 +36,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.oclc.seek.flink.job.JobContract;
-import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.job.BatchJobGeneric;
 
 /**
  *
  */
-public class WordCountJob extends JobGeneric implements JobContract {
+public class WordCountJob extends BatchJobGeneric {
     private Properties props = new Properties();
 
     @Override
@@ -77,8 +76,8 @@ public class WordCountJob extends JobGeneric implements JobContract {
     }
 
     @Override
-    public void execute() throws Exception {
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final ExecutionEnvironment env) throws Exception {
+        // ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         // Set up the Hadoop Input Format
         Job job = Job.getInstance();

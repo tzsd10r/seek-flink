@@ -55,8 +55,8 @@ public class KafkaToConsoleJob implements JobContract {
      * @throws Exception
      */
     @Override
-    public void execute() throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // env.getConfig().disableSysoutLogging();
         // use system default value
         env.getConfig().setNumberOfExecutionRetries(-1);
@@ -94,7 +94,8 @@ public class KafkaToConsoleJob implements JobContract {
             configFile = args[0];
         }
 
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         KafkaToConsoleJob kc = new KafkaToConsoleJob(configFile);
-        kc.execute();
+        kc.execute(env);
     }
 }

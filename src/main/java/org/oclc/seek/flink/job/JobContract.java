@@ -10,6 +10,7 @@
  ******************************************************************************************************************/
 package org.oclc.seek.flink.job;
 
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 /**
  *
@@ -18,7 +19,7 @@ public interface JobContract {
     /**
      * @throws Exception
      */
-    public void execute() throws Exception;
+    public void execute(StreamExecutionEnvironment env) throws Exception;
 
     /**
      *
