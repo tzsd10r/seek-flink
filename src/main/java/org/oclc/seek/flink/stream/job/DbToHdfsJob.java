@@ -158,7 +158,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
         // .addSink(new HdfsSink().build(parameterTool.get("hdfs.folder")))
         // .name("hdfs");
 
-        env.execute("Generates Queries... executes them and writes results to HDFS");
+        env.execute("Queries the DB and drops results on Kafka");
     }
 
     /**
