@@ -49,7 +49,6 @@ public class DatabaseInputRecord implements Writable, DBWritable {
 
     @Override
     public void write(final PreparedStatement ps) throws SQLException {
-        // ps.setString(1, collection_uid);
     }
 
     @Override
@@ -74,7 +73,9 @@ public class DatabaseInputRecord implements Writable, DBWritable {
      * @return
      */
     public String toJson() {
-        return new Gson().toJson(map);
+        String s = new Gson().toJson(map);
+        System.out.println(s);
+        return s;
     }
 
     /**
