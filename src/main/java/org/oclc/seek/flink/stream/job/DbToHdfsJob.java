@@ -133,7 +133,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
             .name("kafka");
 
-        // records.addSink(new HdfsSink().build(parameterTool.get("hdfs.folder")))
+        // records.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
         // .name("hdfs");;
 
         // add a simple source which is writing some strings
