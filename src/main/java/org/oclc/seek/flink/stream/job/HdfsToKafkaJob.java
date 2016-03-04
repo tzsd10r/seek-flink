@@ -31,7 +31,6 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
-        String env = System.getProperty("environment");
 
         ClassLoader cl = ClassLoader.getSystemClassLoader();
 
@@ -41,9 +40,11 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
             System.out.println(url.getFile());
         }
 
+        String env = System.getProperty("environment");
         String configFile = "conf/config." + env + ".properties";
 
-        // Properties properties = new Properties();
+        System.out.println("Using this config file... [" + configFile + "]");
+
         try {
             props.load(ClassLoader.getSystemResourceAsStream(configFile));
         } catch (Exception e) {

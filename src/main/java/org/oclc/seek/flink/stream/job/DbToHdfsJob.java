@@ -6,23 +6,21 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.batch.job;
+package org.oclc.seek.flink.stream.job;
 
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Properties;
 
-import org.apache.flink.api.common.ExecutionConfig;
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.core.fs.FileSystem.WriteMode;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
@@ -30,17 +28,13 @@ import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DatabaseInputRecord;
+import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 
 /**
  *
  */
-public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
+public class DbToHdfsJob extends JobGeneric implements JobContract {
     private Properties props = new Properties();
-
-    @Override
-    public void init(final String query) {
-        props.put("query", query);
-    }
 
     @Override
     public void init() {
@@ -70,14 +64,20 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
 
     @Override
     public void execute() throws Exception {
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        ExecutionConfig config = env.getConfig();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        System.out.println("Configuration...\n" + config);
-        System.out.println("Configuration...\n" + config.toString());
+        // env.getConfig().disableSysoutLogging();
+
+        // use system default value
+        env.getConfig().setNumberOfExecutionRetries(-1);
 
         // make parameters available in the web interface
-        config.setGlobalJobParameters(parameterTool);
+        env.getConfig().setGlobalJobParameters(parameterTool);
+
+        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
+
+        // create a checkpoint every 5 secodns
+        env.enableCheckpointing(5000);
 
         JobConf conf = new JobConf();
 
@@ -104,14 +104,12 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
         // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
         conf.setNumTasksToExecutePerJvm(1);
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 5));
-        // conf.writeXml(System.out);
 
-        /*
-         * get records from database
-         */
-        DataSet<String> records = env
-            .createInput(hadoopInputFormat)
-            .map(new RichMapFunction<Tuple2<LongWritable, DatabaseInputRecord>, String>() {
+        DataStream<Tuple2<LongWritable, DatabaseInputRecord>> rawRecords =
+            env.createInput(hadoopInputFormat).rebalance();
+
+        DataStream<String> jsonRecords =
+            rawRecords.map(new RichMapFunction<Tuple2<LongWritable, DatabaseInputRecord>, String>() {
                 private static final long serialVersionUID = 1L;
                 private LongCounter recordCount = new LongCounter();
 
@@ -131,24 +129,57 @@ public class DBImportHadoopToHdfsJob extends JobGeneric implements JobContract {
             .name("build db record")
             .returns(String.class).rebalance();
 
-        /*
-         * send records to hdfs
-         */
-        records
-            .writeAsText(parameterTool.get("hdfs.db.output"), WriteMode.NO_OVERWRITE)
-        .name("hdfs");
+        jsonRecords.addSink(
+            new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
+            .name("kafka");
 
-        // Setup Hadoop’s TextOutputFormat
-        // HadoopOutputFormat<Text, LongWritable> hadoopOutputFormat =
-        // new HadoopOutputFormat<Text, LongWritable>(
-        // new TextOutputFormat<Text, LongWritable>(), new JobConf());
-        // hadoopOutputFormat.getJobConf().set("mapred.textoutputformat.separator", " ");
+        // records.addSink(new HdfsSink().build(parameterTool.get("hdfs.folder")))
+        // .name("hdfs");;
 
-        // FileOutputFormat.setOutputPath(hadoopOutputFormat.getJobConf(), new Path(outputPath));
+        // add a simple source which is writing some strings
+        // env.addSource(new SimpleStringGenerator())
+        // .rebalance()
+        // .map(new MapFunction<String, String>() {
+        // private static final long serialVersionUID = 1L;
+        //
+        // @Override
+        // public String map(final String value) throws Exception {
+        // new Thread(
+        // new Runnable() {
+        // @Override
+        // public void run() {
+        // new JobRunner().run("dbimportentryfindjob", value);
+        // }
+        // }, "DBImportEntryFindJob").start();;
+        //
+        // return "Query: " + value + " is complete!";
+        // }
+        // }).name("entry-find-queries")
+        // .addSink(new HdfsSink().build(parameterTool.get("hdfs.folder")))
+        // .name("hdfs");
 
-        JobExecutionResult result = env.execute("Fetch data from database and store on HDFS");
-        long rc = result.getAccumulatorResult("recordCount");
+        env.execute("Generates Queries... executes them and writes results to HDFS");
+    }
 
-        System.out.println("recordCount: " + rc);
+    /**
+     *
+     */
+    public static class SimpleStringGenerator implements SourceFunction<String> {
+        private static final long serialVersionUID = 2174904787118597072L;
+        boolean running = true;
+        long i = 1;
+
+        @Override
+        public void run(final SourceContext<String> ctx) throws Exception {
+            while (running && i <= 1) {
+                ctx.collect("select owner_institution, collection_ui from entry_find limit " + i++);
+                Thread.sleep(10);
+            }
+        }
+
+        @Override
+        public void cancel() {
+            running = false;
+        }
     }
 }
