@@ -125,9 +125,8 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
                     DatabaseInputRecord dbInputRecord = tuple.f1;
                     return dbInputRecord.toJson();
                 }
-            })
-            .name("build db record")
-            .returns(String.class).rebalance();
+            }).name("build db record");
+        // .returns(String.class).rebalance();
 
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
@@ -135,28 +134,6 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         // records.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
         // .name("hdfs");;
-
-        // add a simple source which is writing some strings
-        // env.addSource(new SimpleStringGenerator())
-        // .rebalance()
-        // .map(new MapFunction<String, String>() {
-        // private static final long serialVersionUID = 1L;
-        //
-        // @Override
-        // public String map(final String value) throws Exception {
-        // new Thread(
-        // new Runnable() {
-        // @Override
-        // public void run() {
-        // new JobRunner().run("dbimportentryfindjob", value);
-        // }
-        // }, "DBImportEntryFindJob").start();;
-        //
-        // return "Query: " + value + " is complete!";
-        // }
-        // }).name("entry-find-queries")
-        // .addSink(new HdfsSink().build(parameterTool.get("hdfs.folder")))
-        // .name("hdfs");
 
         env.execute("Queries the DB and drops results on Kafka");
     }
