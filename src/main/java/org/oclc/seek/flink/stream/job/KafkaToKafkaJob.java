@@ -75,12 +75,14 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
         env.getConfig().setGlobalJobParameters(parameterTool);
         env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
 
+        final String prefix = parameterTool.getRequired("db.table");
+
         /*
          * Kafka streaming source
          */
         SourceFunction<String> source =
             new KafkaSourceBuilder().build(
-                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+                parameterTool.get(prefix + ".kafka.src.topic"),
                 parameterTool.getProperties());
 
         DataStream<String> jsonRecords = env
@@ -100,13 +102,13 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             @Override
             public String map(final String value) throws Exception {
                 recordCount.add(1L);
-                return parameterTool.getRequired("db.table") + ":{" + value + "}";
+                return prefix + ":{" + value + "}";
             }
         }).name("add root element to json record");
 
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.stage.topic"),
+                parameterTool.get(prefix + ".kafka.stage.topic"),
                 parameterTool.getProperties()))
                 .name("kafka stage");
 

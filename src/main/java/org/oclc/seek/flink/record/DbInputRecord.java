@@ -81,7 +81,7 @@ public class DbInputRecord implements Writable, DBWritable {
      */
     public String toJson() {
         String s = new Gson().toJson(map);
-        System.out.println(s);
+        // System.out.println(s);
         return s;
     }
 
