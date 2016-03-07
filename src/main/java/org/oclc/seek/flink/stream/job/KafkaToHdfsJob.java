@@ -8,6 +8,8 @@
 
 package org.oclc.seek.flink.stream.job;
 
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Properties;
 
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -28,21 +30,25 @@ public class KafkaToHdfsJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
 
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
-    }
+        URL[] urls = ((URLClassLoader) cl).getURLs();
 
-    /**
-     * @param configFile
-     * @throws Exception
-     */
-    public KafkaToHdfsJob(final String configFile) throws Exception {
-        Properties props = new Properties();
+        for (URL url : urls) {
+            System.out.println(url.getFile());
+        }
+
+        String env = System.getProperty("environment");
+        String configFile = "conf/config." + env + ".properties";
+
+        System.out.println("Using this config file... [" + configFile + "]");
+
         try {
-            props.load(KafkaToHdfsJob.class.getResourceAsStream(configFile));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            System.exit(0);
+            props.load(ClassLoader.getSystemResourceAsStream(configFile));
+        } catch (Exception e) {
+            System.out.println("Failed to load the properties file... [" + configFile + "]");
+            e.printStackTrace();
+            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
         }
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
@@ -98,8 +104,9 @@ public class KafkaToHdfsJob extends JobGeneric implements JobContract {
         }
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        KafkaToHdfsJob kh = new KafkaToHdfsJob(configFile);
-        kh.execute(env);
+        KafkaToHdfsJob job = new KafkaToHdfsJob();
+        job.init();
+        job.execute(env);
     }
 
 }

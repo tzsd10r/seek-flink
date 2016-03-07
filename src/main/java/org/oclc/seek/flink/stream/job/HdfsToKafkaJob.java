@@ -95,4 +95,23 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
 
         env.execute("Reads from HDFS and writes to Kafka Stage");
     }
+
+    /**
+     * @param args
+     * @throws Exception
+     */
+    public static void main(final String[] args) throws Exception {
+        String configFile;
+        if (args.length == 0) {
+            configFile = "conf/conf.prod.properties";
+            System.out.println("Missing input : conf file location, using default: " + configFile);
+        } else {
+            configFile = args[0];
+        }
+
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        HdfsToKafkaJob job = new HdfsToKafkaJob();
+        job.init();
+        job.execute(env);
+    }
 }
