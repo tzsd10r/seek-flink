@@ -12,15 +12,16 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Properties;
 
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
@@ -69,16 +70,22 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         // env.getConfig().disableSysoutLogging();
 
+        // create a checkpoint every 1000 ms
+        env.enableCheckpointing(1000);
+        // set the timeout low to minimize latency
+        env.setBufferTimeout(10);
+
+        ExecutionConfig config = env.getConfig();
+
         // use system default value
-        env.getConfig().setNumberOfExecutionRetries(-1);
+        config.setNumberOfExecutionRetries(-1);
 
         // make parameters available in the web interface
-        env.getConfig().setGlobalJobParameters(parameterTool);
+        config.setGlobalJobParameters(parameterTool);
 
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
+        // defines how many times the job is restarted after a failure
+        config.setNumberOfExecutionRetries(5);
 
-        // create a checkpoint every 5 secodns
-        env.enableCheckpointing(5000);
 
         JobConf conf = new JobConf();
 
@@ -136,7 +143,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             .name("kafka");
 
         jsonRecords.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
-            .name("hdfs");
+        .name("hdfs");
 
         env.execute("Queries the DB and drops results on Kafka");
     }

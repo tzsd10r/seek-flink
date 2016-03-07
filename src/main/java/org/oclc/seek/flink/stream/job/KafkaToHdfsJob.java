@@ -56,12 +56,12 @@ public class KafkaToHdfsJob extends JobGeneric implements JobContract {
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // env.getConfig().disableSysoutLogging();
         // use system default value
-        env.getConfig().setNumberOfExecutionRetries(-1);
+        env.getConfig().setNumberOfExecutionRetries(5);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
 
-        env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
+        env.enableCheckpointing(5000); // create a checkpoint every 5 seconds
 
         KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
         HdfsSink hdfsSink = new HdfsSink();
