@@ -89,7 +89,7 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             .addSource(source)
             .rebalance().name("kafka source");
 
-        jsonRecords.map(new RichMapFunction<String, String>() {
+        DataStream<String> enrichedJsonRecords = jsonRecords.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
             private LongCounter recordCount = new LongCounter();
 
@@ -106,7 +106,7 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             }
         }).name("add root element to json record");
 
-        jsonRecords.addSink(
+        enrichedJsonRecords.addSink(
             new KafkaSinkBuilder().build(
                 parameterTool.get(prefix + ".kafka.stage.topic"),
                 parameterTool.getProperties()))
