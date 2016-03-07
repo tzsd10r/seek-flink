@@ -144,7 +144,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
                 .name("kafka");
 
         jsonRecords.addSink(
-            new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + "fs.sink.dir")))
+            new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
             .name("filesystem");
 
         env.execute("Queries the DB and drops results on Kafka");
