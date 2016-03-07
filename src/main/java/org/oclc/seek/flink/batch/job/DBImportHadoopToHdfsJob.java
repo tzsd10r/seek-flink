@@ -134,8 +134,9 @@ public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
          * send records to hdfs
          */
         records
-        .writeAsText(parameterTool.get("hdfs.db.output"), WriteMode.NO_OVERWRITE)
-        .name("hdfs");
+            .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
+                WriteMode.OVERWRITE)
+            .name("filesystem sink");
 
         // Setup Hadoop’s TextOutputFormat
         // HadoopOutputFormat<Text, LongWritable> hadoopOutputFormat =

@@ -101,8 +101,9 @@ public class DBImportIssnlJob extends BatchJobGeneric {
                 output.collect(new Gson().toJson(map));
             }
         }).withParameters(parameterTool.getConfiguration())
-        .writeAsText("hdfs:///" + parameterTool.get("hdfs.folder") + "/result.txt", WriteMode.OVERWRITE)
-        .name("hdfs");
+            .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
+                WriteMode.OVERWRITE)
+            .name("filesystem sink");
 
         env.execute("Fetching Data from Database");
     }

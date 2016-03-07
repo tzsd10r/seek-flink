@@ -68,7 +68,8 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
 
         // DataStream<String> text = env.readTextFile(parameterTool.getRequired("hdfs.kafka.source"));
         DataStream<String> text =
-            env.readFileStream(parameterTool.getRequired("hdfs.kafka.source"), 1000, WatchType.ONLY_NEW_FILES);
+            env.readFileStream(parameterTool.getRequired(parameterTool.getRequired("db.table") + ".fs.src.dir"), 1000,
+                WatchType.ONLY_NEW_FILES);
 
         text.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
@@ -86,15 +87,12 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
                 return value;
             }
         }).name("json-records")
-        // .addSink(
-        // new FlinkKafkaProducer(parameterTool.get("kafka.topic"), new StringSerializerSchema(), parameterTool
-        // .getProperties()))
-        .addSink(new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"),
-            parameterTool.getProperties()))
-            .name("kafka");
+        .addSink(
+            new KafkaSinkBuilder().build(
+                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.stage.topic"),
+                parameterTool.getProperties()))
+                .name("kafka-stage");
 
-        // transformed.writeAsText("hdfs:///" + parameterTool.getRequired("hdfs.wordcount.output"));
-
-        env.execute("Reads from HDFS and writes to Kafka");
+        env.execute("Reads from HDFS and writes to Kafka Stage");
     }
 }

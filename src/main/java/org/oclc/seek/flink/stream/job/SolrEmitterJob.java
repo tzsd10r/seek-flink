@@ -107,7 +107,7 @@ public class SolrEmitterJob extends JobGeneric implements JobContract {
         jsonRecords.addSink(new SolrSink<String>(config, new SolrDocumentBuilder()))
         .name("solr");
 
-        env.execute("Writes json records to Solr");
+        env.execute("Writes json records to Solr from a stream of generated records");
     }
 
     /**

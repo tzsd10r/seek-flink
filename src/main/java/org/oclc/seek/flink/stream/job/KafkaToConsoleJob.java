@@ -59,26 +59,27 @@ public class KafkaToConsoleJob implements JobContract {
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // env.getConfig().disableSysoutLogging();
         // use system default value
-        env.getConfig().setNumberOfExecutionRetries(-1);
+
+        env.getConfig().setNumberOfExecutionRetries(5);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
-
-        env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
+        env.enableCheckpointing(5000); // create a checkpoint every 5 seconds
 
         KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
 
-        FlinkKafkaConsumer082<String> source = kafkaSourceBuilder.build(parameterTool.getRequired("kafka.topic"),
-            parameterTool.getProperties());
+        FlinkKafkaConsumer082<String> source =
+            kafkaSourceBuilder.build(
+                parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+                parameterTool.getProperties());
 
-        DataStream<String> stream = env.addSource(source, "kafka");
+        DataStream<String> stream = env.addSource(source, "kafka source");
 
         // write kafka stream to standard out.
         stream.print();
 
         System.out.println(env.getExecutionPlan());
 
-        env.execute("Read from Kafka example");
+        env.execute("Read from Kafka example and print out");
     }
 
     /**

@@ -17,7 +17,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.job.runner.JobRunner;
+import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
 
 /**
@@ -50,35 +50,39 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract {
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // env.getConfig().disableSysoutLogging();
         // use system default value
-        env.getConfig().setNumberOfExecutionRetries(-1);
+        env.getConfig().setNumberOfExecutionRetries(5);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
         env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
 
         /*
          * Kafka streaming source
          */
-        SourceFunction<String> source = new KafkaSourceBuilder().build(parameterTool.getRequired("kafka.topic.source"),
-            parameterTool.getProperties());
+        SourceFunction<String> source =
+            new KafkaSourceBuilder().build(
+                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+                parameterTool.getProperties());
 
-        DataStream<String> streamOfQueries = env
+        DataStream<String> jsonRecords = env
             .addSource(source)
-            .rebalance()
-            .map(new MapFunction<String, String>() {
-                private static final long serialVersionUID = 1L;
+            .rebalance().name("kafka source");
 
-                @Override
-                public String map(final String value) throws Exception {
-                    new JobRunner().run("dbimportentryfindjob");
-                    return "Query: " + value + " is complete!";
-                }
-            }).name("entry-find-queries").broadcast();
+        jsonRecords.map(new MapFunction<String, String>() {
+            private static final long serialVersionUID = 1L;
 
+            @Override
+            public String map(final String value) throws Exception {
+                return parameterTool.getRequired("db.table") + ":{" + value + "}";
+            }
+        }).name("add root element to json record");
 
-        streamOfQueries.print().name("printing results");
+        jsonRecords.addSink(
+            new KafkaSinkBuilder().build(
+                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.stage.topic"),
+                parameterTool.getProperties()))
+                .name("kafka stage");
 
-        env.execute("Read Events from Kafka and write to HDFS");
+        env.execute("Read Events from Kafka Source and write to Kafka Stage");
     }
 
     /**

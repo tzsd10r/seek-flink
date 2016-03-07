@@ -19,7 +19,6 @@ import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
@@ -139,11 +138,14 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
         // .returns(String.class).rebalance();
 
         jsonRecords.addSink(
-            new KafkaSinkBuilder().build(parameterTool.get("kafka.topic"), parameterTool.getProperties()))
-            .name("kafka");
+            new KafkaSinkBuilder().build(
+                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
+                parameterTool.getProperties()))
+                .name("kafka");
 
-        jsonRecords.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
-        .name("hdfs");
+        jsonRecords.addSink(
+            new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + "fs.sink.dir")))
+            .name("filesystem");
 
         env.execute("Queries the DB and drops results on Kafka");
     }

@@ -66,13 +66,16 @@ public class KafkaToHdfsJob extends JobGeneric implements JobContract {
         KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
         HdfsSink hdfsSink = new HdfsSink();
 
-        FlinkKafkaConsumer082<String> source = kafkaSourceBuilder.build(parameterTool.getRequired("kafka.topic"),
-            parameterTool.getProperties());
+        FlinkKafkaConsumer082<String> source =
+            kafkaSourceBuilder.build(
+                parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+                parameterTool.getProperties());
 
-        SinkFunction<String> sink = hdfsSink.build(parameterTool.get("hdfs.folder"));
+        SinkFunction<String> sink =
+            hdfsSink.build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.stage.dir"));
 
-        DataStreamSource<String> stream = env.addSource(source, "kafka");
-        stream.addSink(sink).name("hdfs");
+        DataStreamSource<String> stream = env.addSource(source, "kafka source");
+        stream.addSink(sink).name("filesystem sink");
 
         // write kafka stream to standard out.
         // messageStream.print();
