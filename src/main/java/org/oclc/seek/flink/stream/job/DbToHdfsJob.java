@@ -27,7 +27,7 @@ import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.record.DatabaseInputRecord;
+import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.stream.sink.HdfsSink;
 import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 
@@ -89,7 +89,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             parameterTool.getRequired("db.password"));
 
         DBInputFormat.setInput(conf,
-            DatabaseInputRecord.class,
+            DbInputRecord.class,
             parameterTool.getRequired("db.table"),
             null,
             null,
@@ -97,9 +97,9 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             parameterTool.getRequired("db.fields")
         });
 
-        HadoopInputFormat<LongWritable, DatabaseInputRecord> hadoopInputFormat =
-            new HadoopInputFormat<LongWritable, DatabaseInputRecord>(
-                new DBInputFormat(), LongWritable.class, DatabaseInputRecord.class, conf);
+        HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
+            new HadoopInputFormat<LongWritable, DbInputRecord>(
+                new DBInputFormat(), LongWritable.class, DbInputRecord.class, conf);
 
         // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
         // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
@@ -107,13 +107,11 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 6));
 
-        DataStream<Tuple2<LongWritable, DatabaseInputRecord>> rawRecords = env.createInput(hadoopInputFormat);
+        DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords = env.createInput(hadoopInputFormat);
 
-        // DataStream<String> jsonRecords = env.createInput(hadoopInputFormat)// .rebalance()
-        // ;
         DataStream<String> jsonRecords =
             rawRecords
-            .map(new RichMapFunction<Tuple2<LongWritable, DatabaseInputRecord>, String>() {
+            .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, String>() {
                 private static final long serialVersionUID = 1L;
                 private LongCounter recordCount = new LongCounter();
 
@@ -124,12 +122,13 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
                 }
 
                 @Override
-                public String map(final Tuple2<LongWritable, DatabaseInputRecord> tuple) throws Exception {
+                public String map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
                     recordCount.add(1L);
-                    DatabaseInputRecord dbInputRecord = tuple.f1;
+                    DbInputRecord dbInputRecord = tuple.f1;
                     return dbInputRecord.toJson();
                 }
             }).name("build db record");
+
         // .returns(String.class).rebalance();
 
         jsonRecords.addSink(
@@ -137,31 +136,9 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             .name("kafka");
 
         jsonRecords.addSink(new HdfsSink().build(parameterTool.get("hdfs.db.output")))
-        .name("hdfs");;
+            .name("hdfs");
 
         env.execute("Queries the DB and drops results on Kafka");
-    }
-
-    /**
-     *
-     */
-    public static class SimpleStringGenerator implements SourceFunction<String> {
-        private static final long serialVersionUID = 2174904787118597072L;
-        boolean running = true;
-        long i = 1;
-
-        @Override
-        public void run(final SourceContext<String> ctx) throws Exception {
-            while (running && i <= 1) {
-                ctx.collect("select owner_institution, collection_ui from entry_find limit " + i++);
-                Thread.sleep(10);
-            }
-        }
-
-        @Override
-        public void cancel() {
-            running = false;
-        }
     }
 
     /**

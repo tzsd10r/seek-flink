@@ -25,7 +25,7 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class DatabaseInputRecord implements Writable, DBWritable {
+public class DbInputRecord implements Writable, DBWritable {
     private String driver;
     private String url;
     private String user;
@@ -34,9 +34,9 @@ public class DatabaseInputRecord implements Writable, DBWritable {
     private String[] fields = new String[] {
         "owner_institution", "collection_uid"
     };
+
     private Long ownerInstitution;
     private String collectionUid;
-
     private Map<String, Object> map = new HashMap<String, Object>();
 
     @Override
@@ -53,10 +53,17 @@ public class DatabaseInputRecord implements Writable, DBWritable {
 
     @Override
     public void readFields(final ResultSet rs) throws SQLException {
-        ownerInstitution = rs.getLong("owner_institution");
-        collectionUid = rs.getString("collection_uid");
+        setOwnerInstitution(rs.getLong("owner_institution"));
+        setCollectionUid(rs.getString("collection_uid"));
+    }
 
+    public void setOwnerInstitution(final Long ownerInstitution) {
+        this.ownerInstitution = ownerInstitution;
         map.put(fields[0], ownerInstitution);
+    }
+
+    public void setCollectionUid(final String collectionUid) {
+        this.collectionUid = collectionUid;
         map.put(fields[1], collectionUid);
     }
 

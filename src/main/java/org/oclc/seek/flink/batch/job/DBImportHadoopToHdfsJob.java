@@ -28,7 +28,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.BatchJobGeneric;
-import org.oclc.seek.flink.record.DatabaseInputRecord;
+import org.oclc.seek.flink.record.DbInputRecord;
 
 /**
  *
@@ -87,7 +87,7 @@ public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
             parameterTool.getRequired("db.password"));
 
         DBInputFormat.setInput(conf,
-            DatabaseInputRecord.class,
+            DbInputRecord.class,
             parameterTool.getRequired("db.table"),
             null,
             null,
@@ -95,9 +95,9 @@ public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
             parameterTool.getRequired("db.fields")
         });
 
-        HadoopInputFormat<LongWritable, DatabaseInputRecord> hadoopInputFormat =
-            new HadoopInputFormat<LongWritable, DatabaseInputRecord>(
-                new DBInputFormat(), LongWritable.class, DatabaseInputRecord.class, conf);
+        HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
+            new HadoopInputFormat<LongWritable, DbInputRecord>(
+                new DBInputFormat(), LongWritable.class, DbInputRecord.class, conf);
 
         // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
         // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
@@ -110,7 +110,7 @@ public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
          */
         DataSet<String> records = env
             .createInput(hadoopInputFormat)
-            .map(new RichMapFunction<Tuple2<LongWritable, DatabaseInputRecord>, String>() {
+            .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, String>() {
                 private static final long serialVersionUID = 1L;
                 private LongCounter recordCount = new LongCounter();
 
@@ -121,9 +121,9 @@ public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
                 }
 
                 @Override
-                public String map(final Tuple2<LongWritable, DatabaseInputRecord> tuple) throws Exception {
+                public String map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
                     recordCount.add(1L);
-                    DatabaseInputRecord dbInputRecord = tuple.f1;
+                    DbInputRecord dbInputRecord = tuple.f1;
                     return dbInputRecord.toJson();
                 }
             })

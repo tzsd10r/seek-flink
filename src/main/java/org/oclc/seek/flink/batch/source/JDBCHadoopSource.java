@@ -16,7 +16,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
-import org.oclc.seek.flink.record.DatabaseInputRecord;
+import org.oclc.seek.flink.record.DbInputRecord;
 
 /**
  *
@@ -28,15 +28,15 @@ public class JDBCHadoopSource {
      * @return an instance of {@link HadoopInputFormat}
      * @throws IOException
      */
-    public HadoopInputFormat<LongWritable, DatabaseInputRecord> build(final DatabaseInputRecord dbInputRecord,
-        final Class<DatabaseInputRecord> clazz) throws IOException {
+    public HadoopInputFormat<LongWritable, DbInputRecord> build(final DbInputRecord dbInputRecord,
+        final Class<DbInputRecord> clazz) throws IOException {
         // Get job instance
         JobConf job = new JobConf();
 
         // Setup Hadoop DBInputFormat by creating a Flink Wrapper (HadoopInputFormat) with parameters that specify
         // the Hadoop InputFormat, the KEY and VALUE types, and the job
-        HadoopInputFormat<LongWritable, DatabaseInputRecord> hadoopInputFormat =
-            new HadoopInputFormat<LongWritable, DatabaseInputRecord>(
+        HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
+            new HadoopInputFormat<LongWritable, DbInputRecord>(
                 new DBInputFormat(), LongWritable.class, clazz, job);
 
         // Get the Hadoop Configuration... which is obtained through the HADOOP_CONF_DIR found in the

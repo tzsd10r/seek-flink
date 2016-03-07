@@ -16,7 +16,7 @@ import org.oclc.seek.flink.derby.DerbyInstance;
 /**
  *
  */
-public class DerbyInputRecord extends DatabaseInputRecord {
+public class DerbyInputRecord extends DbInputRecord {
     private String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     private String url = "jdbc:derby:memory:ebookshop";
     private String user = "";

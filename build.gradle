@@ -172,16 +172,16 @@ configurations {
     testCompile.transitive = true
 }
 
-//jar {
-//    manifest {
-//        attributes 'Implementation-Title': 'seek-flink',
-//        'Implementation-Version': version,
-//        'Built-By': System.getProperty('user.name'),
-//        'Built-Date': new Date(),
-//        'Built-JDK': System.getProperty('java.version'),
-//        'Main-Class': 'org.oclc.seek.flink.job.runner.JobRunner'
-//    }
-//}
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'seek-flink',
+        'Implementation-Version': version,
+        'Built-By': System.getProperty('user.name'),
+        'Built-Date': new Date(),
+        'Built-JDK': System.getProperty('java.version'),
+        'Main-Class': 'org.oclc.seek.flink.job.runner.JobRunner'
+    }
+}
 
 test {
     testLogging {  // Show that tests are run in the command-line output
