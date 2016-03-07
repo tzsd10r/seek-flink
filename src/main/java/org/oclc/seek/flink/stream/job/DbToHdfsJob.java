@@ -113,7 +113,8 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 6));
 
-        DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords = env.createInput(hadoopInputFormat);
+        DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
+            env.createInput(hadoopInputFormat).name("db source");
 
         DataStream<String> jsonRecords =
             rawRecords
@@ -133,19 +134,17 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
                     DbInputRecord dbInputRecord = tuple.f1;
                     return dbInputRecord.toJson();
                 }
-            }).name("build db record");
-
-        // .returns(String.class).rebalance();
+            }).name("convert db record into json");
 
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
                 parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
                 parameterTool.getProperties()))
-                .name("kafka");
+            .name("put json records on Kafka");
 
         jsonRecords.addSink(
             new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
-            .name("filesystem");
+            .name("put json records on filesystem");
 
         env.execute("Queries the DB and drops results on Kafka");
     }
