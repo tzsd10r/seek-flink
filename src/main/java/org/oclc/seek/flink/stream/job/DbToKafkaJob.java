@@ -1,11 +1,13 @@
 /****************************************************************************************************************
- * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- * OCLC proprietary information: the enclosed materials contain
- * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- * any part to any third party or used by any person for any purpose, without written
- * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
+ *
+ *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ *
+ *  OCLC proprietary information: the enclosed materials contain
+ *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ *  any part to any third party or used by any person for any purpose, without written
+ *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
+ *
  ******************************************************************************************************************/
-
 package org.oclc.seek.flink.stream.job;
 
 import java.net.URL;
@@ -29,12 +31,12 @@ import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.stream.sink.HdfsSink;
+import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
 
 /**
  *
  */
-public class DbToHdfsJob extends JobGeneric implements JobContract {
+public class DbToKafkaJob extends JobGeneric implements JobContract {
     private Properties props = new Properties();
 
     @Override
@@ -82,7 +84,6 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         // defines how many times the job is restarted after a failure
         config.setNumberOfExecutionRetries(5);
-
 
         JobConf conf = new JobConf();
 
@@ -134,15 +135,15 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
                 }
             }).name("convert db record into json");
 
-        // DataStreamSink<String> kafka = jsonRecords.addSink(
-        // new KafkaSinkBuilder().build(
-        // parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
-        // parameterTool.getProperties()))
-        // .name("put json records on Kafka");
+        DataStreamSink<String> kafka = jsonRecords.addSink(
+            new KafkaSinkBuilder().build(
+                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
+                parameterTool.getProperties()))
+                .name("put json records on Kafka");
 
-        DataStreamSink<String> filesystem = jsonRecords.addSink(
-            new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
-            .name("put json records on filesystem");
+        // DataStreamSink<String> filesystem = jsonRecords.addSink(
+        // new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
+        // .name("put json records on filesystem");
 
         env.execute("Queries the DB and drops results on Kafka");
     }
@@ -155,7 +156,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
         System.setProperty("environment", "test");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DbToHdfsJob job = new DbToHdfsJob();
+        DbToKafkaJob job = new DbToKafkaJob();
         job.init();
         job.execute(env);
     }

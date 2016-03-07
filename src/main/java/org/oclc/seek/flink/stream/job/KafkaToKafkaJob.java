@@ -18,6 +18,7 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.job.JobContract;
@@ -106,7 +107,7 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             }
         }).name("add root element to json record");
 
-        enrichedJsonRecords.addSink(
+        DataStreamSink<String> kafka = enrichedJsonRecords.addSink(
             new KafkaSinkBuilder().build(
                 parameterTool.get(prefix + ".kafka.stage.topic"),
                 parameterTool.getProperties()))
