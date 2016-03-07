@@ -97,7 +97,7 @@ dependencies {
     compile ('org.apache.flink:flink-jdbc:0.10.2')
 
     // kafka
-    compile ('org.apache.kafka:kafka_2.10:0.8.2.0') 
+    compile ('org.apache.kafka:kafka_2.10:0.8.2.0')
     
     // gson
     compile ('com.google.code.gson:gson:2.6.1')
@@ -115,7 +115,11 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:1.1.2'
     // Add the log4j -> sfl4j (-> logback) bridge into the classpath... Hadoop logs to log4j
     compile 'org.slf4j:log4j-over-slf4j:1.7.7'
-
+    
+    //compile 'org.slf4j:slf4j-api:1.7.6'
+    //compile 'org.slf4j:slf4j-log4j12:1.7.6'
+    //compile 'org.slf4j:slf4j-simple:1.7.6'
+    
     // test
     testCompile 'org.easymock:easymock:3.4'
     testCompile 'junit:junit:4.12'

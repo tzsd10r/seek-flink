@@ -8,9 +8,10 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import java.io.Serializable;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
@@ -20,24 +21,21 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.oclc.seek.flink.batch.document.SolrDocumentBuilder;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
+import org.oclc.seek.flink.record.DbInputRecord;
+import org.oclc.seek.flink.record.DbInputRecordBuilder;
+import org.oclc.seek.flink.stream.function.SolrSink;
 import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
 
-/**
- * Note that the Kafka source/sink is expecting the following parameters to be set
- * - "bootstrap.servers" (comma separated list of kafka brokers)
- * - "zookeeper.connect" (comma separated list of zookeeper servers)
- * - "group.id" the id of the consumer group
- * - "topic" the name of the topic to read data from.
- */
-public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializable {
-    private static final long serialVersionUID = 1L;
-    Properties props = new Properties();
+public class KafkaToSolrJob extends JobGeneric implements JobContract {
+    private Properties props = new Properties();
 
     @Override
     public void init() {
+        String env = System.getProperty("environment");
+
         ClassLoader cl = ClassLoader.getSystemClassLoader();
 
         URL[] urls = ((URLClassLoader) cl).getURLs();
@@ -46,11 +44,9 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             System.out.println(url.getFile());
         }
 
-        String env = System.getProperty("environment");
         String configFile = "conf/config." + env + ".properties";
 
-        System.out.println("Using this config file... [" + configFile + "]");
-
+        // Properties properties = new Properties();
         try {
             props.load(ClassLoader.getSystemResourceAsStream(configFile));
         } catch (Exception e) {
@@ -59,21 +55,27 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
         }
 
+        // String solrXml = "solr.xml";
+
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }
 
-    /**
-     * @throws Exception
-     */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // env.getConfig().disableSysoutLogging();
-        // use system default value
-        env.getConfig().setNumberOfExecutionRetries(5);
+
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
+
+        // create a checkpoint every 5 secodns
+        // env.enableCheckpointing(5000);
+
+        // HttpSolrClient solrClient = (HttpSolrClient) getSolrClient();
+        Map<String, String> config = new HashMap<String, String>();
+
+        config.put("solr.type", "Http");
+        // config.put("solr.location", solrClient.getBaseURL());
+        config.put("zkconnectionstring", parameterTool.getRequired("zookeeper.connect"));
 
         /*
          * Kafka streaming source
@@ -98,38 +100,39 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             }
 
             @Override
-            public String map(final String value) throws Exception {
+            public String map(final String record) throws Exception {
                 recordCount.add(1L);
-                return parameterTool.getRequired("db.table") + ":{" + value + "}";
+                return record;
             }
-        }).name("add root element to json record");
+        }).name("No transformation... just count the records");
 
-        jsonRecords.addSink(
-            new KafkaSinkBuilder().build(
-                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.stage.topic"),
-                parameterTool.getProperties()))
-                .name("kafka stage");
+        jsonRecords.addSink(new SolrSink<String>(config, new SolrDocumentBuilder()))
+        .name("solr sink");
 
-        env.execute("Read Events from Kafka Source and write to Kafka Stage");
+        env.execute("Fetches json records from Kafka and emits them to Solr");
     }
 
     /**
-     * @param args
-     * @throws Exception
+     *
      */
-    public static void main(final String[] args) throws Exception {
-        String configFile;
-        if (args.length == 0) {
-            configFile = "conf/conf.prod.properties";
-            System.out.println("Missing input : conf file location, using default: " + configFile);
-        } else {
-            configFile = args[0];
+    public static class SimpleStringGenerator implements SourceFunction<DbInputRecord> {
+        private static final long serialVersionUID = 2174904787118597072L;
+        boolean running = true;
+        long i = 1;
+
+        @Override
+        public void run(final SourceContext<DbInputRecord> ctx) throws Exception {
+            while (running && i <= 100) {
+                ctx.collect(new DbInputRecordBuilder().ownerInstitution(91475L + i++)
+                    .collectionUid("wiley.interScience")
+                    .build());
+                Thread.sleep(10);
+            }
         }
 
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        KafkaToKafkaJob job = new KafkaToKafkaJob();
-        job.init();
-        job.execute(env);
+        @Override
+        public void cancel() {
+            running = false;
+        }
     }
-
 }

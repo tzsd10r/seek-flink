@@ -24,7 +24,7 @@ public class HdfsSink {
     public SinkFunction<String> build(final String path) {
         RollingSink<String> sink = new RollingSink<String>(path);
 
-        sink.setBucketer(new DateTimeBucketer("yyyy-MM-dd.HHmm"));
+        sink.setBucketer(new DateTimeBucketer("yyyy-MM-dd"));
         sink.setWriter(new StringWriter<String>());
 
         return sink;

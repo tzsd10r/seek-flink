@@ -28,6 +28,5 @@ public class KafkaSinkBuilder {
     })
     public SinkFunction<String> build(final String topic, final Properties properties) {
         return new FlinkKafkaProducer(topic, new StringSerializerSchema(), properties);
-
     }
 }
