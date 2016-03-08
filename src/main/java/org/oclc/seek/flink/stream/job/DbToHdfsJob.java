@@ -48,6 +48,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
         }
 
         String env = System.getProperty("environment");
+
         String configFile = "conf/config." + env + ".properties";
 
         System.out.println("Using this config file... [" + configFile + "]");
@@ -144,7 +145,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
             .name("put json records on filesystem");
 
-        env.execute("Queries the DB and drops results on Kafka");
+        env.execute("Queries the DB and drops results onto Filesystem");
     }
 
     /**
@@ -153,6 +154,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
      */
     public static void main(final String[] args) throws Exception {
         System.setProperty("environment", "test");
+        System.setProperty("map.tasks", "8");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DbToHdfsJob job = new DbToHdfsJob();

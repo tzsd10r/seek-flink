@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -28,21 +29,24 @@ public abstract class JobGeneric implements JobContract {
     }
 
     @Override
-    public void init() {
-        Properties props = new Properties();
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
-    }
+    public abstract void init();
 
     /**
      * @param props
      * @return an {@link Map} instance of a {@link Properties} object
      */
     public Map<String, String> propertiesToMap(final Properties props) {
+        String mapTasks = System.getProperty("map.tasks");
+
         Map<String, String> map = new HashMap<String, String>();
         for (String key : props.stringPropertyNames()) {
             map.put(key, props.getProperty(key));
         }
+
+        if (!StringUtils.isBlank(mapTasks)) {
+            map.put("map.tasks", mapTasks);
+        }
+
         return map;
     }
 
