@@ -21,10 +21,8 @@ import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
@@ -71,7 +69,7 @@ public class ExampleJob {
         DataStream<OuterPojo> sourceStream22 = env.addSource(new PojoSource());
 
         sourceStream21
-        .assignTimestampsAndWatermarks(new MyWatermarkAssigner())
+            // .assignTimestampsAndWatermarks(new MyWatermarkAssigner())
         .keyBy(2, 2)
         .timeWindow(Time.of(10, TimeUnit.MILLISECONDS), Time.of(4, TimeUnit.MILLISECONDS))
         .maxBy(3)
@@ -118,22 +116,22 @@ public class ExampleJob {
         }
     }
 
-    private static class MyWatermarkAssigner implements
-    AssignerWithPeriodicWatermarks<Tuple5<Integer, String, Character, Double, Boolean>> {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public long extractTimestamp(final Tuple5<Integer, String, Character, Double, Boolean> value,
-            final long previousElementTimestamp) {
-            return value.f0;
-        }
-
-        @Override
-        public Watermark getCurrentWatermark() {
-            return Watermark.MAX_WATERMARK;
-        }
-
-    }
+    // private static class MyWatermarkAssigner implements
+    // AssignerWithPeriodicWatermarks<Tuple5<Integer, String, Character, Double, Boolean>> {
+    // private static final long serialVersionUID = 1L;
+    //
+    // @Override
+    // public long extractTimestamp(final Tuple5<Integer, String, Character, Double, Boolean> value,
+    // final long previousElementTimestamp) {
+    // return value.f0;
+    // }
+    //
+    // @Override
+    // public Watermark getCurrentWatermark() {
+    // return Watermark.MAX_WATERMARK;
+    // }
+    //
+    // }
 
     private static class MyFlatMapFunction implements
     FlatMapFunction<Tuple4<Integer, String, Double, Boolean>, OuterPojo> {

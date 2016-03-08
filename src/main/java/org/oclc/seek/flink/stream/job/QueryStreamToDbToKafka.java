@@ -9,13 +9,9 @@
 package org.oclc.seek.flink.stream.job;
 
 import java.io.Serializable;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Properties;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
@@ -56,34 +52,12 @@ import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
  */
 public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, Serializable {
     private static final long serialVersionUID = 1L;
-    private Properties props = new Properties();
 
     // private JdbcTemplate jdbcTemplate;
 
     @Override
     public void init() {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
-
-        String env = System.getProperty("environment");
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     /**
@@ -91,12 +65,12 @@ public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, S
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // env.getConfig().disableSysoutLogging();
-        // use system default value
-        env.getConfig().setNumberOfExecutionRetries(5);
+        // defines how many times the job is restarted after a failure
+        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
+
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
+
         env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
 
         final String prefix = parameterTool.getRequired("db.table");

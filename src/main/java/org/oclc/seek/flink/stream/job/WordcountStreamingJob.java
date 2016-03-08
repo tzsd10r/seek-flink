@@ -8,11 +8,8 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import java.util.Properties;
-
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
@@ -23,30 +20,14 @@ import org.oclc.seek.flink.job.JobGeneric;
  *
  */
 public class WordcountStreamingJob extends JobGeneric implements JobContract {
-    private Properties props = new Properties();
 
     @Override
     public void init() {
-        String env = System.getProperty("environment");
-
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> text = env.readTextFile(parameterTool.getRequired("hdfs.wordcount.source"));
 
         DataStream<Tuple2<String, Integer>> transformed = text.flatMap(new Tokenizer()).keyBy(0).sum(1);

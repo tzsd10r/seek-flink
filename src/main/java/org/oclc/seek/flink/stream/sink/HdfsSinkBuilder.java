@@ -16,7 +16,7 @@ import org.apache.flink.streaming.connectors.fs.StringWriter;
 /**
  *
  */
-public class HdfsSink {
+public class HdfsSinkBuilder {
     /**
      * @param path
      * @return an instance of {@link SinkFunction}

@@ -26,6 +26,7 @@ public class SocketToConsoleJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
+        super.init();
     }
 
     @Override

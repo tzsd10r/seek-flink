@@ -17,18 +17,17 @@ import java.util.Properties;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer082;
 import org.oclc.seek.flink.job.JobContract;
+import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
 
 /**
  *
  */
-public class KafkaToConsoleJob implements JobContract {
-    private ParameterTool parameterTool;
-
+public class KafkaToConsoleJob extends JobGeneric implements JobContract {
     @Override
     public void init() {
+        super.init();
     }
 
     /**
@@ -58,21 +57,18 @@ public class KafkaToConsoleJob implements JobContract {
     public void execute(final StreamExecutionEnvironment env) throws Exception {
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // env.getConfig().disableSysoutLogging();
-        // use system default value
 
-        env.getConfig().setNumberOfExecutionRetries(5);
+        // defines how many times the job is restarted after a failure
+        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
+
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
+
         env.enableCheckpointing(5000); // create a checkpoint every 5 seconds
 
-        KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
-
-        FlinkKafkaConsumer082<String> source =
-            kafkaSourceBuilder.build(
-                parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
-                parameterTool.getProperties());
-
-        DataStream<String> stream = env.addSource(source, "kafka source");
+        DataStream<String> stream = env.addSource(new KafkaSourceBuilder().build(
+            parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+            parameterTool.getProperties()), "kafka source");
 
         // write kafka stream to standard out.
         stream.print();

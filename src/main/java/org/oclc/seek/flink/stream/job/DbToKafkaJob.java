@@ -10,16 +10,11 @@
  ******************************************************************************************************************/
 package org.oclc.seek.flink.stream.job;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Properties;
-
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
@@ -37,32 +32,10 @@ import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
  *
  */
 public class DbToKafkaJob extends JobGeneric implements JobContract {
-    private Properties props = new Properties();
 
     @Override
     public void init() {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
-
-        String env = System.getProperty("environment");
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override
@@ -76,14 +49,11 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
 
         ExecutionConfig config = env.getConfig();
 
-        // use system default value
-        config.setNumberOfExecutionRetries(-1);
+        // defines how many times the job is restarted after a failure
+        // config.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
         // make parameters available in the web interface
         config.setGlobalJobParameters(parameterTool);
-
-        // defines how many times the job is restarted after a failure
-        config.setNumberOfExecutionRetries(5);
 
         JobConf conf = new JobConf();
 
@@ -142,7 +112,7 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
                 .name("put json records on Kafka");
 
         // DataStreamSink<String> filesystem = jsonRecords.addSink(
-        // new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
+        // new HdfsSinkBuilder().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
         // .name("put json records on filesystem");
 
         env.execute("Queries the DB and drops results onto Kafka");

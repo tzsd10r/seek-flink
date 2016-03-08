@@ -43,8 +43,11 @@ public abstract class JobGeneric implements JobContract {
         }
 
         String env = System.getProperty("environment");
-
         String configFile = "conf/config." + env + ".properties";
+
+        if (StringUtils.isBlank(env) || env.equalsIgnoreCase("test")) {
+            configFile = "conf/config.test.properties";
+        }
 
         System.out.println("Using this config file... [" + configFile + "]");
 

@@ -21,8 +21,12 @@ public class KafkaSourceBuilder {
     /**
      * @param topic
      * @param properties
-     * @return
+     * @return an instance of {@link FlinkKafkaConsumer08}
      */
+    // public FlinkKafkaConsumer08<String> build(final String topic, final Properties properties) {
+    // return new FlinkKafkaConsumer08<String>(topic, new SimpleStringSchema(),
+    // properties);
+    // }
     public FlinkKafkaConsumer082<String> build(final String topic, final Properties properties) {
         return new FlinkKafkaConsumer082<String>(topic, new SimpleStringSchema(),
             properties);

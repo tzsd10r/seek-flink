@@ -8,13 +8,8 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Properties;
-
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -27,33 +22,10 @@ import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
  *
  */
 public class HdfsToKafkaJob extends JobGeneric implements JobContract {
-    private Properties props = new Properties();
 
     @Override
     public void init() {
-
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
-
-        String env = System.getProperty("environment");
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override
@@ -62,6 +34,9 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
 
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
+
+        // defines how many times the job is restarted after a failure
+        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
         // create a checkpoint every 5 secodns
         // env.enableCheckpointing(5000);

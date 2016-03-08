@@ -8,50 +8,21 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Properties;
-
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer082;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.stream.sink.HdfsSink;
+import org.oclc.seek.flink.stream.sink.HdfsSinkBuilder;
 import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
 
 /**
  *
  */
 public class KafkaToHdfsJob extends JobGeneric implements JobContract {
-    Properties props = new Properties();
 
     @Override
     public void init() {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
-
-        String env = System.getProperty("environment");
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     /**
@@ -59,34 +30,23 @@ public class KafkaToHdfsJob extends JobGeneric implements JobContract {
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // env.getConfig().disableSysoutLogging();
-        // use system default value
-        env.getConfig().setNumberOfExecutionRetries(5);
+        // defines how many times the job is restarted after a failure
+        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
+
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(4, 10000));
 
-        env.enableCheckpointing(5000); // create a checkpoint every 5 seconds
+        // create a checkpoint every 5 seconds
+        env.enableCheckpointing(5000);
 
-        KafkaSourceBuilder kafkaSourceBuilder = new KafkaSourceBuilder();
-        HdfsSink hdfsSink = new HdfsSink();
+        DataStreamSource<String> stream = env.addSource(new KafkaSourceBuilder().build(
+            parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+            parameterTool.getProperties()), "kafka source");
 
-        FlinkKafkaConsumer082<String> source =
-            kafkaSourceBuilder.build(
-                parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
-                parameterTool.getProperties());
+        stream
+        .addSink(new HdfsSinkBuilder().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.stage.dir")))
+        .name("filesystem sink");
 
-        SinkFunction<String> sink =
-            hdfsSink.build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.stage.dir"));
-
-        DataStreamSource<String> stream = env.addSource(source, "kafka source");
-        stream.addSink(sink).name("filesystem sink");
-
-        // write kafka stream to standard out.
-        // messageStream.print();
-
-        // System.out.println(env.getExecutionPlan());
         env.execute("Read Events from Kafka and write to HDFS");
     }
 

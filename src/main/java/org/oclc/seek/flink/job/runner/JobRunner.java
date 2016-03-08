@@ -69,7 +69,7 @@ public class JobRunner {
 
         JobRunner runner = new JobRunner();
 
-        if (args.length == 0 || args.length > 1) {
+        if (args.length == 0 || args.length > 2) {
             runner.usage();
         }
 

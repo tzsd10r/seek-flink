@@ -21,12 +21,12 @@ public class KafkaSinkBuilder {
     /**
      * @param topic
      * @param properties
-     * @return an instance of {@link FlinkKafkaProducer}
+     * @return an instance of {@link FlinkKafkaProducer08}
      */
-    @SuppressWarnings({
-        "unchecked", "rawtypes"
-    })
+    // public SinkFunction<String> build(final String topic, final Properties properties) {
+    // return new FlinkKafkaProducer08<String>(topic, new StringSerializerSchema(), properties);
+    // }
     public SinkFunction<String> build(final String topic, final Properties properties) {
-        return new FlinkKafkaProducer(topic, new StringSerializerSchema(), properties);
+        return new FlinkKafkaProducer<String>(topic, new StringSerializerSchema(), properties);
     }
 }

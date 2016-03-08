@@ -8,14 +8,11 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import java.util.Properties;
-
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
@@ -27,13 +24,12 @@ import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.stream.sink.HdfsSink;
+import org.oclc.seek.flink.stream.sink.HdfsSinkBuilder;
 
 /**
  *
  */
 public class DbToHdfsJob extends JobGeneric implements JobContract {
-    // private Properties props = new Properties();
 
     @Override
     public void init() {
@@ -51,14 +47,11 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
         ExecutionConfig config = env.getConfig();
 
-        // use system default value
-        config.setNumberOfExecutionRetries(-1);
-
         // make parameters available in the web interface
         config.setGlobalJobParameters(parameterTool);
 
         // defines how many times the job is restarted after a failure
-        config.setNumberOfExecutionRetries(5);
+        // config.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
 
         JobConf conf = new JobConf();
@@ -118,7 +111,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
         // .name("put json records on Kafka");
 
         DataStreamSink<String> filesystem = jsonRecords.addSink(
-            new HdfsSink().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
+            new HdfsSinkBuilder().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
             .name("put json records on filesystem");
 
         env.execute("Queries the DB and drops results onto Filesystem");
@@ -131,6 +124,7 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
     public static void main(final String[] args) throws Exception {
         System.setProperty("environment", "test");
         System.setProperty("map.tasks", "8");
+
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DbToHdfsJob job = new DbToHdfsJob();
