@@ -35,14 +35,14 @@ public class KafkaToSolrJob extends JobGeneric implements JobContract {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // create a checkpoint every 5 secodns
+        env.enableCheckpointing(5000);
+
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         // defines how many times the job is restarted after a failure
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
-        // create a checkpoint every 5 secodns
-        env.enableCheckpointing(5000);
 
         Map<String, String> config = new HashMap<String, String>();
         config.put(SolrSink.SOLR_ZK_STRING, parameterTool.getRequired(SolrSink.SOLR_ZK_STRING));

@@ -8,7 +8,7 @@
  *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
  *
  ******************************************************************************************************************/
-package org.oclc.seek.flink.stream.job;
+package org.oclc.seek.flink.stream.function;
 
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;

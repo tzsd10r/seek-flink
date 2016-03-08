@@ -8,7 +8,6 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
@@ -38,21 +37,17 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // env.getConfig().disableSysoutLogging();
-
         // create a checkpoint every 1000 ms
         env.enableCheckpointing(1000);
+
         // set the timeout low to minimize latency
         env.setBufferTimeout(10);
 
-        ExecutionConfig config = env.getConfig();
-
         // make parameters available in the web interface
-        config.setGlobalJobParameters(parameterTool);
+        env.getConfig().setGlobalJobParameters(parameterTool);
 
         // defines how many times the job is restarted after a failure
         // config.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
 
         JobConf conf = new JobConf();
 
@@ -103,12 +98,6 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
                     return dbInputRecord.toJson();
                 }
             }).name("convert db record into json");
-
-        // DataStreamSink<String> kafka = jsonRecords.addSink(
-        // new KafkaSinkBuilder().build(
-        // parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
-        // parameterTool.getProperties()))
-        // .name("put json records on Kafka");
 
         DataStreamSink<String> filesystem = jsonRecords.addSink(
             new HdfsSinkBuilder().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))

@@ -37,11 +37,11 @@ public class SolrEmitterJob extends JobGeneric implements JobContract {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // create a checkpoint every 5 secodns
+        env.enableCheckpointing(5000);
+
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-
-        // create a checkpoint every 5 secodns
-        // env.enableCheckpointing(5000);
 
         // HttpSolrClient solrClient = (HttpSolrClient) getSolrClient();
         Map<String, String> config = new HashMap<String, String>();

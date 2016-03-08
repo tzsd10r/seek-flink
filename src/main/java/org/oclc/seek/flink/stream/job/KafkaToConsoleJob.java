@@ -55,8 +55,8 @@ public class KafkaToConsoleJob extends JobGeneric implements JobContract {
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // env.getConfig().disableSysoutLogging();
+        // create a checkpoint every 5 seconds
+        env.enableCheckpointing(5000);
 
         // defines how many times the job is restarted after a failure
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
@@ -64,7 +64,6 @@ public class KafkaToConsoleJob extends JobGeneric implements JobContract {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        env.enableCheckpointing(5000); // create a checkpoint every 5 seconds
 
         DataStream<String> stream = env.addSource(new KafkaSourceBuilder().build(
             parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),

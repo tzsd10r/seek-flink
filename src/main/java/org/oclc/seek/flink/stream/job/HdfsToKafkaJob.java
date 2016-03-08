@@ -30,7 +30,8 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        // create a checkpoint every 5 secodns
+        // env.enableCheckpointing(5000);
 
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
@@ -38,10 +39,6 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
         // defines how many times the job is restarted after a failure
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
-        // create a checkpoint every 5 secodns
-        // env.enableCheckpointing(5000);
-
-        // DataStream<String> text = env.readTextFile(parameterTool.getRequired("hdfs.kafka.source"));
         DataStream<String> text =
             env.readFileStream(parameterTool.getRequired(parameterTool.getRequired("db.table") + ".fs.src.dir"), 1000,
                 WatchType.ONLY_NEW_FILES);

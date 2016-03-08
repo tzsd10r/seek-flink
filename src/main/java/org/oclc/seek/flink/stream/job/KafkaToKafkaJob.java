@@ -42,13 +42,13 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
+        env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
+
         // defines how many times the job is restarted after a failure
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-
-        env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
 
         final String prefix = parameterTool.getRequired("db.table");
 
