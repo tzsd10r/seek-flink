@@ -8,8 +8,6 @@
 
 package org.oclc.seek.flink.stream.job;
 
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Properties;
 
 import org.apache.flink.api.common.ExecutionConfig;
@@ -35,33 +33,11 @@ import org.oclc.seek.flink.stream.sink.HdfsSink;
  *
  */
 public class DbToHdfsJob extends JobGeneric implements JobContract {
-    private Properties props = new Properties();
+    // private Properties props = new Properties();
 
     @Override
     public void init() {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
-
-        String env = System.getProperty("environment");
-
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override

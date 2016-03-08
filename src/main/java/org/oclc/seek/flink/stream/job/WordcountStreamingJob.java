@@ -27,21 +27,9 @@ public class WordcountStreamingJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
-        // ClassLoader cl = ClassLoader.getSystemClassLoader();
-        //
-        // URL[] urls = ((URLClassLoader)cl).getURLs();
-        //
-        // for(URL url: urls){
-        // System.out.println(url.getFile());
-        // }
-
         String env = System.getProperty("environment");
-        String test = System.getProperty("test");
-        String configFile = "conf/config." + env + ".properties";
 
-        if (test != null) {
-            configFile = "config.test.properties";
-        }
+        String configFile = "conf/config." + env + ".properties";
 
         System.out.println("Using this config file... [" + configFile + "]");
 

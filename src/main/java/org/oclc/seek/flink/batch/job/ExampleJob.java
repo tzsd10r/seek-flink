@@ -1,13 +1,11 @@
 /****************************************************************************************************************
- *
- *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
- *
+ * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
+
 package org.oclc.seek.flink.batch.job;
 
 import java.util.Arrays;
@@ -22,11 +20,11 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.TimestampExtractor;
+import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
@@ -65,15 +63,15 @@ public class ExampleJob {
             new Tuple5<>(17, "peach", 'd', 1.0, true));
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.getConfig().enableTimestamps();
+        // env.getConfig().enableTimestamps();
 
-        SingleOutputStreamOperator<Tuple5<Integer, String, Character, Double, Boolean>,
-        DataStreamSource<Tuple5<Integer, String, Character, Double, Boolean>>> sourceStream21 =
-        env.fromCollection(input);
+        DataStreamSource<Tuple5<Integer, String, Character, Double, Boolean>> sourceStream21 =
+            env.fromCollection(input);
+
         DataStream<OuterPojo> sourceStream22 = env.addSource(new PojoSource());
 
         sourceStream21
-        .assignTimestamps(new MyTimestampExtractor())
+        .assignTimestampsAndWatermarks(new MyWatermarkAssigner())
         .keyBy(2, 2)
         .timeWindow(Time.of(10, TimeUnit.MILLISECONDS), Time.of(4, TimeUnit.MILLISECONDS))
         .maxBy(3)
@@ -93,8 +91,9 @@ public class ExampleJob {
     MapFunction<Tuple5<Integer, String, Character, Double, Boolean>, Tuple4<Integer, String, Double, Boolean>> {
 
         @Override
-        public Tuple4<Integer, String, Double, Boolean> map(final Tuple5<Integer, String, Character, Double, Boolean> value)
-            throws Exception {
+        public Tuple4<Integer, String, Double, Boolean> map(
+            final Tuple5<Integer, String, Character, Double, Boolean> value)
+                throws Exception {
             return new Tuple4<>(value.f0, value.f1 + "-" + value.f2, value.f3, value.f4);
         }
 
@@ -119,26 +118,21 @@ public class ExampleJob {
         }
     }
 
-    private static class MyTimestampExtractor implements
-    TimestampExtractor<Tuple5<Integer, String, Character, Double, Boolean>> {
+    private static class MyWatermarkAssigner implements
+    AssignerWithPeriodicWatermarks<Tuple5<Integer, String, Character, Double, Boolean>> {
         private static final long serialVersionUID = 1L;
 
         @Override
         public long extractTimestamp(final Tuple5<Integer, String, Character, Double, Boolean> value,
-            final long currentTimestamp) {
+            final long previousElementTimestamp) {
             return value.f0;
         }
 
         @Override
-        public long extractWatermark(final Tuple5<Integer, String, Character, Double, Boolean> value,
-            final long currentTimestamp) {
-            return (long) value.f0 - 1;
+        public Watermark getCurrentWatermark() {
+            return Watermark.MAX_WATERMARK;
         }
 
-        @Override
-        public long getCurrentWatermark() {
-            return Long.MIN_VALUE;
-        }
     }
 
     private static class MyFlatMapFunction implements
@@ -222,7 +216,5 @@ public class ExampleJob {
 
         }
     }
-
-
 
 }

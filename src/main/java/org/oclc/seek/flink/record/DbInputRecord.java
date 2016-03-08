@@ -31,6 +31,7 @@ public class DbInputRecord implements Writable, DBWritable {
     private String user;
     private String password;
     private String table;
+
     private String[] fields = new String[] {
         "owner_institution", "collection_uid"
     };
@@ -65,15 +66,6 @@ public class DbInputRecord implements Writable, DBWritable {
     public void setCollectionUid(final String collectionUid) {
         this.collectionUid = collectionUid;
         map.put(fields[1], collectionUid);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append(ownerInstitution);
-        s.append(" ");
-        s.append(collectionUid);
-        return s.toString();
     }
 
     /**

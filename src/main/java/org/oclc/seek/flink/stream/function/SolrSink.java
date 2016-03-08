@@ -14,7 +14,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
 import org.oclc.seek.flink.batch.document.SolrDocumentBuilder;
 import org.slf4j.Logger;
@@ -24,16 +23,17 @@ import org.slf4j.LoggerFactory;
  * @param <T>
  */
 public class SolrSink<T extends String> extends RichSinkFunction<T> {
+    private final Logger LOG = LoggerFactory.getLogger(SolrSink.class);
+
     private static final long serialVersionUID = 1L;
     private final Map<String, String> config;
     private final SolrDocumentBuilder builder;
 
-    private final Logger LOG = LoggerFactory.getLogger(SolrSink.class);
     private transient SolrClient solrClient;
 
-    public static final String CONFIG_KEY_SOLR_TYPE = "solr.type";
-    public static final String SOLR_LOCATION = "solr.location";
-    public static final String SOLR_ZK_STRING = "zkconnectionstring";
+    // public static final String CONFIG_KEY_SOLR_TYPE = "solr.type";
+    // public static final String SOLR_LOCATION = "solr.location";
+    public static final String SOLR_ZK_STRING = "zookeeper.connect";
 
     /**
      * @param config
@@ -46,7 +46,8 @@ public class SolrSink<T extends String> extends RichSinkFunction<T> {
 
     @Override
     public void open(final Configuration configuration) {
-        solrClient = createClient(config.get(CONFIG_KEY_SOLR_TYPE));
+        solrClient = createClient();
+        // solrClient = createClient(config.get(CONFIG_KEY_SOLR_TYPE));
     }
 
     /**
@@ -63,7 +64,7 @@ public class SolrSink<T extends String> extends RichSinkFunction<T> {
         }
 
         System.out.println(solrInputDocument);
-        solrClient.add(solrInputDocument);
+        solrClient.add("kbwc-entry", solrInputDocument, 500);
     }
 
     @Override
@@ -74,16 +75,17 @@ public class SolrSink<T extends String> extends RichSinkFunction<T> {
      * @param solrType
      * @return an instance of {@link SolrClient}
      */
-    public SolrClient createClient(final String solrType) {
-        if (solrType.equals("Http")) {
-            return new HttpSolrClient(config.get(SOLR_LOCATION));
-        } else if (solrType.equals("Cloud")) {
-            return new CloudSolrClient(config.get(SOLR_ZK_STRING));
-        } else {
-            if (LOG.isInfoEnabled()) {
-                LOG.error("Invalid Solr type in the configuration");
-            }
-            throw new RuntimeException("Invalid Solr type in the configuration, valid types are standard or cloud");
-        }
+    // public SolrClient createClient(final String solrType) {
+    public SolrClient createClient() {
+        // if (solrType.equals("http")) {
+        // return new HttpSolrClient(config.get(SOLR_LOCATION));
+        // } else if (solrType.equals("cloud")) {
+        return new CloudSolrClient(config.get(SOLR_ZK_STRING));
+        // } else {
+        // if (LOG.isInfoEnabled()) {
+        // LOG.error("Invalid Solr type in the configuration");
+        // }
+        // throw new RuntimeException("Invalid Solr type in the configuration, valid types are standard or cloud");
+        // }
     }
 }

@@ -24,18 +24,41 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
-import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
 
 /**
- * Note that the Kafka source/sink is expecting the following parameters to be set
- * - "bootstrap.servers" (comma separated list of kafka brokers)
- * - "zookeeper.connect" (comma separated list of zookeeper servers)
- * - "group.id" the id of the consumer group
+ * Here, you can start creating your execution plan for Flink.
+ * <p>
+ * Start with getting some data from the environment, as follows:
+ *
+ * <pre>
+ * env.readTextFile(textPath);
+ * </pre>
+ *
+ * ...then, transform the resulting DataStream<T> using operations like the following:
+ * <p>
+ * .filter() <br>
+ * .flatMap() <br>
+ * .join() <br>
+ * .group()
+ * <p>
+ * ...and many more.
+ * <p>
+ * Have a look at the programming guide and examples:
+ * <p>
+ * http://flink.apache.org/docs/latest/programming_guide.html<br>
+ * http://flink.apache.org/docs/latest/examples.html <br>
+ * <p>
+ * Note that the Kafka source/sink is expecting the following parameters to be set <br>
+ * - "bootstrap.servers" (comma separated list of kafka brokers) <br>
+ * - "zookeeper.connect" (comma separated list of zookeeper servers) <br>
+ * - "group.id" the id of the consumer group <br>
  * - "topic" the name of the topic to read data from.
  */
-public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializable {
+public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, Serializable {
     private static final long serialVersionUID = 1L;
-    Properties props = new Properties();
+    private Properties props = new Properties();
+
+    // private JdbcTemplate jdbcTemplate;
 
     @Override
     public void init() {
@@ -77,20 +100,22 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
         env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
 
         final String prefix = parameterTool.getRequired("db.table");
+        final String driver = parameterTool.getRequired("db.driver");
+        final String url = parameterTool.getRequired("db.url");
+        final String user = parameterTool.getRequired("db.user");
+        final String password = parameterTool.getRequired("db.password");
+
+        // jdbcTemplate = new JdbcTemplate(dataSource);
 
         /*
-         * Kafka streaming source
+         * Query Generator stream
          */
-        SourceFunction<String> source =
-            new KafkaSourceBuilder().build(
-                parameterTool.get(prefix + ".kafka.src.topic"),
-                parameterTool.getProperties());
-
-        DataStream<String> jsonRecords = env
-            .addSource(source).name("kafka source")
+        DataStream<String> queries = env
+            .addSource(new QueryGeneratorStream())
+            .name("generator of queries")
             .rebalance();
 
-        DataStream<String> enrichedJsonRecords = jsonRecords.map(new RichMapFunction<String, String>() {
+        DataStream<String> enrichedJsonRecords = queries.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
             private LongCounter recordCount = new LongCounter();
 
@@ -101,9 +126,20 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
             }
 
             @Override
-            public String map(final String value) throws Exception {
+            public String map(final String query) throws Exception {
+                // List<DbInputRecord> record = jdbcTemplate.query(
+                // "select first_name, last_name from t_actor",
+                // new RowMapper<Actor>() {
+                // public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
+                // Actor actor = new Actor();
+                // actor.setFirstName(rs.getString("first_name"));
+                // actor.setLastName(rs.getString("last_name"));
+                // return actor;
+                // }
+                // });
+
                 recordCount.add(1L);
-                return prefix + ":{" + value + "}";
+                return prefix + ":{" + query + "}";
             }
         }).name("add root element to json record");
 
@@ -114,6 +150,38 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
                 .name("kafka stage");
 
         env.execute("Read Events from Kafka Source and write to Kafka Stage");
+    }
+
+    /**
+     *
+     */
+    public static class QueryGeneratorStream implements SourceFunction<String> {
+        private static final long serialVersionUID = 2174904787118597072L;
+        boolean running = true;
+        long i = 1;
+
+        @Override
+        public void run(final SourceContext<String> ctx) throws Exception {
+            while (running && i <= 100) {
+                ctx.collect("select * from entry_find where ");
+                Thread.sleep(10);
+            }
+        }
+
+        // @Override
+        // public void run(final SourceContext<DbInputRecord> ctx) throws Exception {
+        // while (running && i <= 100) {
+        // ctx.collect(new DbInputRecordBuilder().ownerInstitution(91475L + i++)
+        // .collectionUid("wiley.interScience")
+        // .build());
+        // Thread.sleep(10);
+        // }
+        // }
+
+        @Override
+        public void cancel() {
+            running = false;
+        }
     }
 
     /**
@@ -130,7 +198,7 @@ public class KafkaToKafkaJob extends JobGeneric implements JobContract, Serializ
         }
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        KafkaToKafkaJob job = new KafkaToKafkaJob();
+        QueryStreamToDbToKafka job = new QueryStreamToDbToKafka();
         job.init();
         job.execute(env);
     }

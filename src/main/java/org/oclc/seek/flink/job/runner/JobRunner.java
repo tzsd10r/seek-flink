@@ -28,6 +28,8 @@ import org.oclc.seek.flink.stream.job.WordcountStreamingJob;
 /**
  *
  */
+
+// @SpringBootApplication
 public class JobRunner {
     /**
      * @param topologyName
@@ -64,6 +66,7 @@ public class JobRunner {
      * @throws ClassNotFoundException
      */
     public static void main(final String[] args) {
+
         JobRunner runner = new JobRunner();
 
         if (args.length == 0 || args.length > 1) {

@@ -24,11 +24,12 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.batch.document.SolrDocumentBuilder;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.record.DbInputRecordBuilder;
 import org.oclc.seek.flink.stream.function.SolrSink;
 import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
 
+/**
+ *
+ */
 public class KafkaToSolrJob extends JobGeneric implements JobContract {
     private Properties props = new Properties();
 
@@ -62,20 +63,14 @@ public class KafkaToSolrJob extends JobGeneric implements JobContract {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         // create a checkpoint every 5 secodns
-        // env.enableCheckpointing(5000);
+        env.enableCheckpointing(5000);
 
-        // HttpSolrClient solrClient = (HttpSolrClient) getSolrClient();
         Map<String, String> config = new HashMap<String, String>();
-
-        config.put("solr.type", "Http");
-        // config.put("solr.location", solrClient.getBaseURL());
-        config.put("zkconnectionstring", parameterTool.getRequired("zookeeper.connect"));
+        config.put(SolrSink.SOLR_ZK_STRING, parameterTool.getRequired(SolrSink.SOLR_ZK_STRING));
 
         /*
          * Kafka streaming source
@@ -87,7 +82,8 @@ public class KafkaToSolrJob extends JobGeneric implements JobContract {
 
         DataStream<String> jsonRecords = env
             .addSource(source)
-            .rebalance().name("kafka source");
+            .name("kafka source")
+            .rebalance();
 
         jsonRecords.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
@@ -110,29 +106,5 @@ public class KafkaToSolrJob extends JobGeneric implements JobContract {
         .name("solr sink");
 
         env.execute("Fetches json records from Kafka and emits them to Solr");
-    }
-
-    /**
-     *
-     */
-    public static class SimpleStringGenerator implements SourceFunction<DbInputRecord> {
-        private static final long serialVersionUID = 2174904787118597072L;
-        boolean running = true;
-        long i = 1;
-
-        @Override
-        public void run(final SourceContext<DbInputRecord> ctx) throws Exception {
-            while (running && i <= 100) {
-                ctx.collect(new DbInputRecordBuilder().ownerInstitution(91475L + i++)
-                    .collectionUid("wiley.interScience")
-                    .build());
-                Thread.sleep(10);
-            }
-        }
-
-        @Override
-        public void cancel() {
-            running = false;
-        }
     }
 }
