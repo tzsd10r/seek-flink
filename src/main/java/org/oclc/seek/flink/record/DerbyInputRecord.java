@@ -11,7 +11,7 @@ package org.oclc.seek.flink.record;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.oclc.seek.flink.derby.DerbyInstance;
+import org.oclc.seek.flink.socket.DerbyInstance;
 
 /**
  *

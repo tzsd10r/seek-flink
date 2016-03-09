@@ -8,7 +8,9 @@
  *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
  *
  ******************************************************************************************************************/
-package org.oclc.seek.flink.record;
+package org.oclc.seek.flink.builder;
+
+import org.oclc.seek.flink.record.DbInputRecord;
 
 public class DbInputRecordBuilder {
     private DbInputRecord dbInputRecord;

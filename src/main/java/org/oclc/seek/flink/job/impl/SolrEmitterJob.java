@@ -18,12 +18,12 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.oclc.seek.flink.builder.DbInputRecordBuilder;
 import org.oclc.seek.flink.document.SolrDocumentBuilder;
 import org.oclc.seek.flink.function.SolrSink;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.record.DbInputRecordBuilder;
 
 /**
  *
