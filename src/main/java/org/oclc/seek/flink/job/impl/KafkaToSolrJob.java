@@ -28,8 +28,8 @@ import org.oclc.seek.flink.document.KbwcEntryDocument;
 import org.oclc.seek.flink.indexer.SeekIndexer;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.EntryFind;
+import org.oclc.seek.flink.sink.SolrSink;
 import org.oclc.seek.flink.sink.SolrSinkBuilder;
-import org.oclc.seek.flink.sink.SolrSinkBuilder.SolrSink;
 import org.oclc.seek.flink.source.KafkaSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +109,7 @@ public class KafkaToSolrJob extends JobGeneric {
 
         // dataAnalysis.addSink(new SolrSinkBuilder<SeekIndexer>(config, new SolrDocumentBuilder()))
         docs.addSink(new SolrSinkBuilder<KbwcEntryDocument>().build(solrConfig))
-            .name("solr sink");;
+        .name("solr sink");;
 
         env.execute();
     }

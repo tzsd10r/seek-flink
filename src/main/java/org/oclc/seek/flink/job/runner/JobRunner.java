@@ -20,6 +20,7 @@ import org.oclc.seek.flink.job.impl.HdfsToKafkaJob;
 import org.oclc.seek.flink.job.impl.KafkaToConsoleJob;
 import org.oclc.seek.flink.job.impl.KafkaToHdfsJob;
 import org.oclc.seek.flink.job.impl.KafkaToKafkaJob;
+import org.oclc.seek.flink.job.impl.KafkaToSolrJob;
 import org.oclc.seek.flink.job.impl.SocketToConsoleJob;
 import org.oclc.seek.flink.job.impl.SolrEmitterJob;
 import org.oclc.seek.flink.job.impl.WordCountJob;
@@ -106,6 +107,8 @@ public class JobRunner {
         s.append(KafkaToKafkaJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(DbToKafkaJob.class.getSimpleName().toLowerCase());
+        s.append("\n");
+        s.append(KafkaToSolrJob.class.getSimpleName().toLowerCase());
         s.append("\n");
 
         System.out.println(s.toString());

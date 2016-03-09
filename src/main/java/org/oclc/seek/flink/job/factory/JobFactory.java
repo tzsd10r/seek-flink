@@ -22,6 +22,7 @@ import org.oclc.seek.flink.job.impl.HdfsToKafkaJob;
 import org.oclc.seek.flink.job.impl.KafkaToConsoleJob;
 import org.oclc.seek.flink.job.impl.KafkaToHdfsJob;
 import org.oclc.seek.flink.job.impl.KafkaToKafkaJob;
+import org.oclc.seek.flink.job.impl.KafkaToSolrJob;
 import org.oclc.seek.flink.job.impl.SocketToConsoleJob;
 import org.oclc.seek.flink.job.impl.SolrEmitterJob;
 import org.oclc.seek.flink.job.impl.WordCountJob;
@@ -46,6 +47,7 @@ public class JobFactory {
         topologies.put(DbToHdfsJob.class.getSimpleName().toLowerCase(), DbToHdfsJob.class);
         topologies.put(KafkaToKafkaJob.class.getSimpleName().toLowerCase(), KafkaToKafkaJob.class);
         topologies.put(DbToKafkaJob.class.getSimpleName().toLowerCase(), DbToKafkaJob.class);
+        topologies.put(KafkaToSolrJob.class.getSimpleName().toLowerCase(), KafkaToSolrJob.class);
     }
 
     /**
