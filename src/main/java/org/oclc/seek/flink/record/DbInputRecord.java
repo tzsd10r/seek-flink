@@ -8,24 +8,17 @@
 
 package org.oclc.seek.flink.record;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.lib.db.DBWritable;
 
 import com.google.gson.Gson;
 
 /**
  *
  */
-public class DbInputRecord implements Writable, DBWritable {
+public class DbInputRecord extends GenericRecord {
     private String driver;
     private String url;
     private String user;
@@ -39,18 +32,6 @@ public class DbInputRecord implements Writable, DBWritable {
     private Long ownerInstitution;
     private String collectionUid;
     private Map<String, Object> map = new HashMap<String, Object>();
-
-    @Override
-    public void readFields(final DataInput in) throws IOException {
-    }
-
-    @Override
-    public void write(final DataOutput out) throws IOException {
-    }
-
-    @Override
-    public void write(final PreparedStatement ps) throws SQLException {
-    }
 
     @Override
     public void readFields(final ResultSet rs) throws SQLException {

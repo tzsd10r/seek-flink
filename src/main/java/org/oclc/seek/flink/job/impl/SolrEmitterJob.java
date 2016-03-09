@@ -10,7 +10,6 @@ package org.oclc.seek.flink.job.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -19,11 +18,10 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.builder.DbInputRecordBuilder;
-import org.oclc.seek.flink.document.SolrDocumentBuilder;
-import org.oclc.seek.flink.function.SolrSink;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
+import org.oclc.seek.flink.sink.SolrSinkBuilder;
 
 /**
  *
@@ -75,7 +73,8 @@ public class SolrEmitterJob extends JobGeneric implements JobContract {
             }
         }).name("json-records");
 
-        jsonRecords.addSink(new SolrSink<String>(config, new SolrDocumentBuilder()))
+        // jsonRecords.addSink(new SolrSinkBuilder<String>(config, new SolrDocumentBuilder()))
+        jsonRecords.addSink(new SolrSinkBuilder<String>().build(config))
         .name("solr");
 
         env.execute("Writes json records to Solr from a stream of generated records");

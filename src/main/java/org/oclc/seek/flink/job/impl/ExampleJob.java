@@ -21,6 +21,7 @@ import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -68,8 +69,7 @@ public class ExampleJob {
 
         DataStream<OuterPojo> sourceStream22 = env.addSource(new PojoSource());
 
-        sourceStream21
-            // .assignTimestampsAndWatermarks(new MyWatermarkAssigner())
+        sourceStream21.assignTimestamps(new MyTimestampExtractor())
         .keyBy(2, 2)
         .timeWindow(Time.of(10, TimeUnit.MILLISECONDS), Time.of(4, TimeUnit.MILLISECONDS))
         .maxBy(3)
@@ -113,6 +113,28 @@ public class ExampleJob {
         @Override
         public void cancel() {
 
+        }
+    }
+
+    private static class MyTimestampExtractor implements
+    TimestampExtractor<Tuple5<Integer, String, Character, Double, Boolean>> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public long extractTimestamp(final Tuple5<Integer, String, Character, Double, Boolean> value,
+            final long currentTimestamp) {
+            return value.f0;
+        }
+
+        @Override
+        public long extractWatermark(final Tuple5<Integer, String, Character, Double, Boolean> value,
+            final long currentTimestamp) {
+            return (long) value.f0 - 1;
+        }
+
+        @Override
+        public long getCurrentWatermark() {
+            return Long.MIN_VALUE;
         }
     }
 

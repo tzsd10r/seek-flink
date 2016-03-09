@@ -1,10 +1,3 @@
-/****************************************************************************************************************
- * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- * OCLC proprietary information: the enclosed materials contain
- * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- * any part to any third party or used by any person for any purpose, without written
- * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
- ******************************************************************************************************************/
 
 package org.oclc.seek.flink.job.impl;
 
@@ -39,7 +32,7 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class KafkaToSolrJob extends JobGeneric {
+public class KafkaToSolr extends JobGeneric {
     /**
      *
      */
@@ -71,6 +64,7 @@ public class KafkaToSolrJob extends JobGeneric {
         DataStream<String> jsonRecords = env.addSource(new KafkaSourceBuilder().build(
             Config.TOPIC_INDEX_INPUT,
             Config.PROP_KAFKA));
+
 
         // Define the desired time window
         // WindowedStream<T, K, Window>
@@ -109,7 +103,7 @@ public class KafkaToSolrJob extends JobGeneric {
 
         // dataAnalysis.addSink(new SolrSinkBuilder<SeekIndexer>(config, new SolrDocumentBuilder()))
         docs.addSink(new SolrSinkBuilder<KbwcEntryDocument>().build(solrConfig))
-            .name("solr sink");;
+        .name("solr sink");;
 
         env.execute();
     }
@@ -152,6 +146,7 @@ public class KafkaToSolrJob extends JobGeneric {
         public static final String ZOOKEEPER_HOSTS =
             "ilabhddb03dxdu.dev.oclc.org:9011,ilabhddb04dxdu.dev.oclc.org:9011";
         public static final String SOLR_COLLECTION = "kbwc-entry";
+        public static final String SOLR_URL = "http://localhost:8983/solr/collection1";
 
         public static Properties PROP_KAFKA = new Properties();
         public static Properties PROP_DB = new Properties();
@@ -161,6 +156,11 @@ public class KafkaToSolrJob extends JobGeneric {
                 "ilabhddb03dxdu.dev.oclc.org:9077,ilabhddb04dxdu.dev.oclc.org:9077");
             PROP_KAFKA.setProperty("zookeeper.connect", ZOOKEEPER_HOSTS);
             PROP_KAFKA.setProperty("group.id", "id");
+
+            PROP_DB.put("db.url", "jdbc:mysql://mysqldev-vip2.dev.oclc.org:3306/kbwc_test");
+            PROP_DB.put("db.user", "kbwc_user");
+            PROP_DB.put("db.password", "kbwc_user");
+            PROP_DB.put("db.driver", "com.mysql.jdbc.Driver");
         }
     }
 
