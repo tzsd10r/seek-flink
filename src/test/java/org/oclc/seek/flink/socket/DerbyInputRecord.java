@@ -6,12 +6,12 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.record;
+package org.oclc.seek.flink.socket;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.oclc.seek.flink.socket.DerbyInstance;
+import org.oclc.seek.flink.record.DbInputRecord;
 
 /**
  *
