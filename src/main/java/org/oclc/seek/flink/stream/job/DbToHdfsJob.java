@@ -23,7 +23,7 @@ import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.stream.sink.HdfsSinkBuilder;
+import org.oclc.seek.flink.sink.HdfsSinkBuilder;
 
 /**
  *

@@ -16,7 +16,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.stream.sink.KafkaSinkBuilder;
+import org.oclc.seek.flink.sink.KafkaSinkBuilder;
 
 /**
  *

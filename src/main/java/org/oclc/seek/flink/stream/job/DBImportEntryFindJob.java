@@ -6,7 +6,7 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.batch.job;
+package org.oclc.seek.flink.stream.job;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,8 +23,8 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.util.Collector;
-import org.oclc.seek.flink.batch.source.JDBCSource;
 import org.oclc.seek.flink.job.BatchJobGeneric;
+import org.oclc.seek.flink.source.JDBCSource;
 
 import com.google.gson.Gson;
 

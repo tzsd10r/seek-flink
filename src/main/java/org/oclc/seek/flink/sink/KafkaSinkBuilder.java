@@ -6,27 +6,27 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.stream.sink;
+package org.oclc.seek.flink.sink;
+
+import java.util.Properties;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.fs.DateTimeBucketer;
-import org.apache.flink.streaming.connectors.fs.RollingSink;
-import org.apache.flink.streaming.connectors.fs.StringWriter;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
+import org.oclc.seek.flink.function.StringSerializerSchema;
 
 /**
  *
  */
-public class HdfsSinkBuilder {
+public class KafkaSinkBuilder {
     /**
-     * @param path
-     * @return an instance of {@link SinkFunction}
+     * @param topic
+     * @param properties
+     * @return an instance of {@link FlinkKafkaProducer08}
      */
-    public SinkFunction<String> build(final String path) {
-        RollingSink<String> sink = new RollingSink<String>(path);
-
-        sink.setBucketer(new DateTimeBucketer("yyyy-MM-dd"));
-        sink.setWriter(new StringWriter<String>());
-
-        return sink;
+    // public SinkFunction<String> build(final String topic, final Properties properties) {
+    // return new FlinkKafkaProducer08<String>(topic, new StringSerializerSchema(), properties);
+    // }
+    public SinkFunction<String> build(final String topic, final Properties properties) {
+        return new FlinkKafkaProducer<String>(topic, new StringSerializerSchema(), properties);
     }
 }

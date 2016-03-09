@@ -9,12 +9,11 @@
 package org.oclc.seek.flink.job.runner;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.oclc.seek.flink.batch.job.DBImportEntryFindJob;
-import org.oclc.seek.flink.batch.job.DBImportHadoopToHdfsJob;
-import org.oclc.seek.flink.batch.job.DBImportIssnlJob;
-import org.oclc.seek.flink.batch.job.WordCountJob;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.factory.JobFactory;
+import org.oclc.seek.flink.stream.job.DBImportEntryFindJob;
+import org.oclc.seek.flink.stream.job.DBImportHadoopToHdfsJob;
+import org.oclc.seek.flink.stream.job.DBImportIssnlJob;
 import org.oclc.seek.flink.stream.job.DbToHdfsJob;
 import org.oclc.seek.flink.stream.job.DbToKafkaJob;
 import org.oclc.seek.flink.stream.job.HdfsToKafkaJob;
@@ -23,6 +22,7 @@ import org.oclc.seek.flink.stream.job.KafkaToHdfsJob;
 import org.oclc.seek.flink.stream.job.KafkaToKafkaJob;
 import org.oclc.seek.flink.stream.job.SocketToConsoleJob;
 import org.oclc.seek.flink.stream.job.SolrEmitterJob;
+import org.oclc.seek.flink.stream.job.WordCountJob;
 import org.oclc.seek.flink.stream.job.WordcountStreamingJob;
 
 /**
