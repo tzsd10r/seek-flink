@@ -6,7 +6,7 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.stream.job;
+package org.oclc.seek.flink.topology;
 
 import java.io.Serializable;
 
@@ -20,7 +20,7 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
-import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
+import org.oclc.seek.flink.source.KafkaSourceBuilder;
 
 /**
  * Note that the Kafka source/sink is expecting the following parameters to be set

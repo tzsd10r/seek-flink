@@ -6,11 +6,10 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.stream.job;
+package org.oclc.seek.flink.topology;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -22,13 +21,12 @@ import org.oclc.seek.flink.batch.document.SolrDocumentBuilder;
 import org.oclc.seek.flink.function.SolrSink;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.record.DbInputRecordBuilder;
+import org.oclc.seek.flink.source.KafkaSourceBuilder;
 
 /**
  *
  */
-public class SolrEmitterJob extends JobGeneric implements JobContract {
+public class KafkaToSolrJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
@@ -43,22 +41,26 @@ public class SolrEmitterJob extends JobGeneric implements JobContract {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        // HttpSolrClient solrClient = (HttpSolrClient) getSolrClient();
+        // defines how many times the job is restarted after a failure
+        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
+
         Map<String, String> config = new HashMap<String, String>();
+        config.put(SolrSink.SOLR_ZK_STRING, parameterTool.getRequired(SolrSink.SOLR_ZK_STRING));
 
-        config.put("solr.type", "Http");
-        // config.put("solr.location", solrClient.getBaseURL());
-        config.put("zkconnectionstring", parameterTool.getRequired("zookeeper.connect"));
+        /*
+         * Kafka streaming source
+         */
+        SourceFunction<String> source =
+            new KafkaSourceBuilder().build(
+                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+                parameterTool.getProperties());
 
-        // DataStream<String> text = env.readTextFile(parameterTool.getRequired("hdfs.kafka.source"));
-        // DataStream<String> text =
-        // env.readFileStream(parameterTool.getRequired("hdfs.solr.source"), 1000, WatchType.ONLY_NEW_FILES);
+        DataStream<String> jsonRecords = env
+            .addSource(source)
+            .name("kafka source")
+            .rebalance();
 
-        // Streams json records every 10 ms
-        DataStream<DbInputRecord> text = env.addSource(new SimpleStringGenerator());
-
-        //
-        DataStream<String> jsonRecords = text.map(new RichMapFunction<DbInputRecord, String>() {
+        jsonRecords.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
             private LongCounter recordCount = new LongCounter();
 
@@ -69,40 +71,15 @@ public class SolrEmitterJob extends JobGeneric implements JobContract {
             }
 
             @Override
-            public String map(final DbInputRecord record) throws Exception {
+            public String map(final String record) throws Exception {
                 recordCount.add(1L);
-                return record.toJson();
+                return record;
             }
-        }).name("json-records");
+        }).name("No transformation... just count the records");
 
         jsonRecords.addSink(new SolrSink<String>(config, new SolrDocumentBuilder()))
-        .name("solr");
+        .name("solr sink");
 
-        env.execute("Writes json records to Solr from a stream of generated records");
+        env.execute("Fetches json records from Kafka and emits them to Solr");
     }
-
-    /**
-     *
-     */
-    public static class SimpleStringGenerator implements SourceFunction<DbInputRecord> {
-        private static final long serialVersionUID = 2174904787118597072L;
-        boolean running = true;
-        long i = 1;
-
-        @Override
-        public void run(final SourceContext<DbInputRecord> ctx) throws Exception {
-            while (running && i <= 100) {
-                ctx.collect(new DbInputRecordBuilder().ownerInstitution(91475L + i++)
-                    .collectionUid("wiley.interScience")
-                    .build());
-                Thread.sleep(10);
-            }
-        }
-
-        @Override
-        public void cancel() {
-            running = false;
-        }
-    }
-
 }

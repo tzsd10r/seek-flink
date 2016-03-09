@@ -6,14 +6,14 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.stream.job;
+package org.oclc.seek.flink.topology;
 
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.sink.HdfsSinkBuilder;
-import org.oclc.seek.flink.stream.source.KafkaSourceBuilder;
+import org.oclc.seek.flink.source.KafkaSourceBuilder;
 
 /**
  *

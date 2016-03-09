@@ -1,14 +1,12 @@
 /****************************************************************************************************************
- *
- *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
- *
+ * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
-package org.oclc.seek.flink.stream.job;
+
+package org.oclc.seek.flink.topology;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -25,12 +23,12 @@ import org.apache.hadoop.mapred.lib.db.DBInputFormat;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.sink.KafkaSinkBuilder;
+import org.oclc.seek.flink.sink.HdfsSinkBuilder;
 
 /**
  *
  */
-public class DbToKafkaJob extends JobGeneric implements JobContract {
+public class DbToHdfsJob extends JobGeneric implements JobContract {
 
     @Override
     public void init() {
@@ -45,11 +43,11 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
         // set the timeout low to minimize latency
         env.setBufferTimeout(10);
 
-        // defines how many times the job is restarted after a failure
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
+
+        // defines how many times the job is restarted after a failure
+        // config.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
         JobConf conf = new JobConf();
 
@@ -101,13 +99,11 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
                 }
             }).name("convert db record into json");
 
-        DataStreamSink<String> kafka = jsonRecords.addSink(
-            new KafkaSinkBuilder().build(
-                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
-                parameterTool.getProperties()))
-                .name("put json records on Kafka");
+        DataStreamSink<String> filesystem = jsonRecords.addSink(
+            new HdfsSinkBuilder().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.sink.dir")))
+            .name("put json records on filesystem");
 
-        env.execute("Queries the DB and drops results onto Kafka");
+        env.execute("Queries the DB and drops results onto Filesystem");
     }
 
     /**
@@ -116,9 +112,11 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
      */
     public static void main(final String[] args) throws Exception {
         System.setProperty("environment", "test");
+        System.setProperty("map.tasks", "8");
+
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DbToKafkaJob job = new DbToKafkaJob();
+        DbToHdfsJob job = new DbToHdfsJob();
         job.init();
         job.execute(env);
     }

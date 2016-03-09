@@ -1,5 +1,5 @@
 
-package org.oclc.seek.flink.stream.source;
+package org.oclc.seek.flink.source;
 
 import java.util.Properties;
 

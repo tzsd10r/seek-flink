@@ -11,19 +11,19 @@ package org.oclc.seek.flink.job.runner;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.factory.JobFactory;
-import org.oclc.seek.flink.stream.job.DBImportEntryFindJob;
-import org.oclc.seek.flink.stream.job.DBImportHadoopToHdfsJob;
-import org.oclc.seek.flink.stream.job.DBImportIssnlJob;
-import org.oclc.seek.flink.stream.job.DbToHdfsJob;
-import org.oclc.seek.flink.stream.job.DbToKafkaJob;
-import org.oclc.seek.flink.stream.job.HdfsToKafkaJob;
-import org.oclc.seek.flink.stream.job.KafkaToConsoleJob;
-import org.oclc.seek.flink.stream.job.KafkaToHdfsJob;
-import org.oclc.seek.flink.stream.job.KafkaToKafkaJob;
-import org.oclc.seek.flink.stream.job.SocketToConsoleJob;
-import org.oclc.seek.flink.stream.job.SolrEmitterJob;
-import org.oclc.seek.flink.stream.job.WordCountJob;
-import org.oclc.seek.flink.stream.job.WordcountStreamingJob;
+import org.oclc.seek.flink.topology.DBImportEntryFindJob;
+import org.oclc.seek.flink.topology.DBImportHadoopToHdfsJob;
+import org.oclc.seek.flink.topology.DBImportIssnlJob;
+import org.oclc.seek.flink.topology.DbToHdfsJob;
+import org.oclc.seek.flink.topology.DbToKafkaJob;
+import org.oclc.seek.flink.topology.HdfsToKafkaJob;
+import org.oclc.seek.flink.topology.KafkaToConsoleJob;
+import org.oclc.seek.flink.topology.KafkaToHdfsJob;
+import org.oclc.seek.flink.topology.KafkaToKafkaJob;
+import org.oclc.seek.flink.topology.SocketToConsoleJob;
+import org.oclc.seek.flink.topology.SolrEmitterJob;
+import org.oclc.seek.flink.topology.WordCountJob;
+import org.oclc.seek.flink.topology.WordcountStreamingJob;
 
 /**
  *
