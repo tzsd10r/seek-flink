@@ -15,7 +15,7 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.common.SolrInputDocument;
-import org.oclc.seek.flink.batch.document.SolrDocumentBuilder;
+import org.oclc.seek.flink.document.SolrDocumentBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

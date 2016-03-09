@@ -6,7 +6,7 @@
  * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
 
-package org.oclc.seek.flink.batch.document;
+package org.oclc.seek.flink.document;
 
 import java.io.Serializable;
 
