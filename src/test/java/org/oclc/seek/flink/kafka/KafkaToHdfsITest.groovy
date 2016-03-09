@@ -12,7 +12,7 @@ package org.oclc.seek.flink.kafka
 
 import org.junit.Before
 import org.junit.Test
-import org.oclc.seek.flink.topology.KafkaToHdfsJob
+import org.oclc.seek.flink.job.impl.KafkaToHdfsJob
 
 class KafkaToHdfsITest {
     KafkaToHdfsJob kafkaToHdfsJob

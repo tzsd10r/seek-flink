@@ -8,7 +8,7 @@
  *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
  *
  ******************************************************************************************************************/
-package org.oclc.seek.flink.topology;
+package org.oclc.seek.flink.job.impl;
 
 import java.util.HashMap;
 import java.util.Map;

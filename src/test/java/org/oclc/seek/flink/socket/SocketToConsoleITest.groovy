@@ -1,7 +1,7 @@
 package org.oclc.seek.flink.socket
 import org.junit.Before
 import org.junit.Test
-import org.oclc.seek.flink.topology.SocketToConsoleJob
+import org.oclc.seek.flink.job.impl.SocketToConsoleJob
 
 /****************************************************************************************************************
  *
