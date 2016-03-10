@@ -81,7 +81,8 @@ dependencies {
     compile 'org.apache.commons:commons-pool2:2.4.2'
 
     // solr
-    compile 'org.apache.solr:solr-solrj:5.3.1'
+    //compile 'org.apache.solr:solr-solrj:5.3.1'
+    compile('org.apache.solr:solr-solrj:5.4.1')
 
     // flink 0.10.2
         compile ('org.apache.flink:flink-streaming-java:0.10.2')
@@ -187,6 +188,8 @@ configurations {
     /* We don't want the following dependencies in our shadowJar */
     all*.exclude group: 'org.apache.hadoop'
     all*.exclude group: 'org.apache.hbase'
+    all*.exclude group: 'commons-httpclient'
+        
     runtime.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     runtime.exclude group: 'log4j', module: 'log4j'
     compile.transitive = true

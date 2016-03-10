@@ -21,7 +21,7 @@ public class SolrSinkBuilder<T> {
      * @return an instance of {@link SolrSink}
      * @throws IOException
      */
-    public SolrSink<T> build(final Map<String, String> config) throws IOException {
+    public SolrSink<T> build(final Map<String, String> config) {
         return new SolrSink<T>(config);
     }
 }
