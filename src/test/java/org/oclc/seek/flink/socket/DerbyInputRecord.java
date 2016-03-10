@@ -11,12 +11,12 @@ package org.oclc.seek.flink.socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.oclc.seek.flink.record.DbInputRecord;
+import org.oclc.seek.flink.record.GenericRecord;
 
 /**
  *
  */
-public class DerbyInputRecord extends DbInputRecord {
+public class DerbyInputRecord extends GenericRecord {
     private String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     private String url = "jdbc:derby:memory:ebookshop";
     private String user = "";
@@ -29,6 +29,7 @@ public class DerbyInputRecord extends DbInputRecord {
     private String author;
     private double price;
     private int qty;
+
 
     /**
      *
@@ -66,7 +67,6 @@ public class DerbyInputRecord extends DbInputRecord {
     /**
      * @return
      */
-    @Override
     public String[] fields() {
         return fields;
     }
@@ -74,7 +74,6 @@ public class DerbyInputRecord extends DbInputRecord {
     /**
      * @return
      */
-    @Override
     public String driver() {
         return driver;
     }
@@ -82,7 +81,6 @@ public class DerbyInputRecord extends DbInputRecord {
     /**
      * @return
      */
-    @Override
     public String url() {
         return url;
     }
@@ -90,7 +88,6 @@ public class DerbyInputRecord extends DbInputRecord {
     /**
      * @return
      */
-    @Override
     public String table() {
         return table;
     }
@@ -98,7 +95,6 @@ public class DerbyInputRecord extends DbInputRecord {
     /**
      * @return
      */
-    @Override
     public String user() {
         return user;
     }
@@ -106,7 +102,6 @@ public class DerbyInputRecord extends DbInputRecord {
     /**
      * @return
      */
-    @Override
     public String password() {
         return password;
     }

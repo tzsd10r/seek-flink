@@ -1,13 +1,11 @@
 /****************************************************************************************************************
- *
- *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
- *
+ * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
+
 package org.oclc.seek.flink.job.impl;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
@@ -16,7 +14,6 @@ import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
@@ -40,7 +37,7 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
         // create a checkpoint every 1000 ms
-        env.enableCheckpointing(1000);
+        // env.enableCheckpointing(1000);
 
         // set the timeout low to minimize latency
         env.setBufferTimeout(10);
@@ -51,6 +48,8 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
+        final String table = parameterTool.getRequired("db.table");
+
         JobConf conf = new JobConf();
 
         DBConfiguration.configureDB(conf,
@@ -59,14 +58,20 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
             parameterTool.getRequired("db.user"),
             parameterTool.getRequired("db.password"));
 
+        // DBInputFormat.setInput(conf,
+        // DbInputRecord.class,
+        // parameterTool.getRequired("db.table"),
+        // null,
+        // null,
+        // new String[] {
+        // parameterTool.getRequired("db.fields")
+        // });
+
         DBInputFormat.setInput(conf,
             DbInputRecord.class,
-            parameterTool.getRequired("db.table"),
-            null,
-            null,
-            new String[] {
-            parameterTool.getRequired("db.fields")
-        });
+            "select * from " + table,
+            "select count(*) from" + table
+            );
 
         HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
             new HadoopInputFormat<LongWritable, DbInputRecord>(
@@ -101,9 +106,10 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
                 }
             }).name("convert db record into json");
 
-        DataStreamSink<String> kafka = jsonRecords.addSink(
+        // DataStreamSink<String> kafka =
+        jsonRecords.addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.sink.topic"),
+                parameterTool.get(table + ".kafka.sink.topic"),
                 parameterTool.getProperties()))
                 .name("put json records on Kafka");
 

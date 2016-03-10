@@ -9,17 +9,27 @@
 package org.oclc.seek.flink.job.impl;
 
 import java.io.Serializable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.sql.DataSource;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.oclc.seek.flink.job.JobContract;
+import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.record.EntryFind;
+import org.oclc.seek.flink.record.EntryFindMapper;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  * Here, you can start creating your execution plan for Flink.
@@ -50,10 +60,8 @@ import org.oclc.seek.flink.sink.KafkaSinkBuilder;
  * - "group.id" the id of the consumer group <br>
  * - "topic" the name of the topic to read data from.
  */
-public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, Serializable {
+public class QueryStreamToDbToKafka extends JobGeneric implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    // private JdbcTemplate jdbcTemplate;
 
     @Override
     public void init() {
@@ -65,21 +73,23 @@ public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, S
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
+        // create a checkpoint every 5 secodns
+        // env.enableCheckpointing(5000);
+
         // defines how many times the job is restarted after a failure
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        env.enableCheckpointing(5000); // create a checkpoint every 5 secodns
 
         final String prefix = parameterTool.getRequired("db.table");
-        final String driver = parameterTool.getRequired("db.driver");
+        // final String driver = parameterTool.getRequired("db.driver");
         final String url = parameterTool.getRequired("db.url");
         final String user = parameterTool.getRequired("db.user");
         final String password = parameterTool.getRequired("db.password");
 
-        // jdbcTemplate = new JdbcTemplate(dataSource);
+        final DataSource datasource = new DriverManagerDataSource(url, user, password);
 
         /*
          * Query Generator stream
@@ -89,35 +99,47 @@ public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, S
             .name("generator of queries")
             .rebalance();
 
-        DataStream<String> enrichedJsonRecords = queries.map(new RichMapFunction<String, String>() {
+        DataStream<List<EntryFind>> records = queries.map(new RichMapFunction<String, List<EntryFind>>() {
             private static final long serialVersionUID = 1L;
             private LongCounter recordCount = new LongCounter();
+            private transient JdbcTemplate jdbcTemplate;
 
             @Override
             public void open(final Configuration parameters) throws Exception {
                 super.open(parameters);
                 getRuntimeContext().addAccumulator("recordCount", recordCount);
+
+                jdbcTemplate = new JdbcTemplate(datasource);
             }
 
             @Override
-            public String map(final String query) throws Exception {
-                // List<DbInputRecord> record = jdbcTemplate.query(
-                // "select first_name, last_name from t_actor",
-                // new RowMapper<Actor>() {
-                // public Actor mapRow(ResultSet rs, int rowNum) throws SQLException {
-                // Actor actor = new Actor();
-                // actor.setFirstName(rs.getString("first_name"));
-                // actor.setLastName(rs.getString("last_name"));
-                // return actor;
-                // }
-                // });
+            public List<EntryFind> map(final String query) throws Exception {
+                List<EntryFind> records =
+                    jdbcTemplate.query(query, new RowMapper<EntryFind>() {
+                        @Override
+                        public EntryFind mapRow(final ResultSet rs, final int i) throws SQLException {
+                            return EntryFindMapper.mapRow(rs);
+                        }
+                    });
 
                 recordCount.add(1L);
-                return prefix + ":{" + query + "}";
+                return records;
             }
         }).name("add root element to json record");
 
-        DataStreamSink<String> kafka = enrichedJsonRecords.addSink(
+        DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<List<EntryFind>, String>() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void flatMap(final List<EntryFind> records, final Collector<String> collector) throws Exception {
+                for (EntryFind entryFind : records) {
+                    collector.collect(entryFind.toJson());
+                }
+            }
+        });
+
+        // DataStreamSink<String> kafka =
+        jsonRecords.addSink(
             new KafkaSinkBuilder().build(
                 parameterTool.get(prefix + ".kafka.stage.topic"),
                 parameterTool.getProperties()))
@@ -130,27 +152,34 @@ public class QueryStreamToDbToKafka extends JobGeneric implements JobContract, S
      *
      */
     public static class QueryGeneratorStream implements SourceFunction<String> {
-        private static final long serialVersionUID = 2174904787118597072L;
+        private static final long serialVersionUID = 1L;
         boolean running = true;
         long i = 1;
 
+        static final String[] hex = {
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"
+        };
+
+
         @Override
         public void run(final SourceContext<String> ctx) throws Exception {
-            while (running && i <= 100) {
-                ctx.collect("select * from entry_find where ");
-                Thread.sleep(10);
-            }
-        }
+            // while (running && i <= 1000) {
+            // ctx.collect("select * from entry_find where ");
+            // Thread.sleep(10);
+            // }
 
-        // @Override
-        // public void run(final SourceContext<DbInputRecord> ctx) throws Exception {
-        // while (running && i <= 100) {
-        // ctx.collect(new DbInputRecordBuilder().ownerInstitution(91475L + i++)
-        // .collectionUid("wiley.interScience")
-        // .build());
-        // Thread.sleep(10);
-        // }
-        // }
+            while (running && i <= 1000) {
+                for (String s : hex) {
+                    for (String h : hex) {
+                        String value = s + h;
+                        String query = "SELECT * FROM entry_find WHERE ID LIKE '" + value + "%'";
+                        // System.out.println(query);
+                        ctx.collect(query);
+                    }
+                }
+            }
+
+        }
 
         @Override
         public void cancel() {

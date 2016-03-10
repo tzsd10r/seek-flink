@@ -10,16 +10,24 @@
  */
 buildscript {
     repositories { mavenCentral() }
-    //dependencies {  classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.1.RELEASE'  }
+    dependencies {
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.1.RELEASE'
+        classpath 'io.spring.gradle:dependency-management-plugin:0.5.4.RELEASE'
+    }
 }
 
 plugins { id 'com.github.johnrengelman.shadow' version '1.2.3' }
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'io.spring.dependency-management'
 //apply plugin: 'spring-boot'
 //apply plugin: 'pmd'
 //apply plugin: 'findbugs'
+
+dependencyManagement {
+    imports { mavenBom 'io.spring.platform:platform-bom:2.0.3.RELEASE' }
+}
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -63,15 +71,19 @@ repositories {
     mavenCentral()
 }
 
+
+
 dependencies {
     // groovy
     compile 'org.codehaus.groovy:groovy-all:2.4.3'
 
     // Spring
-    //    compile( group:'org.springframework.boot', name: 'spring-boot-starter' )
-    //    compile 'org.springframework:spring-beans:4.2.0.RELEASE'
-    //    compile 'org.springframework:spring-context:4.2.0.RELEASE'
-    //    compile( group:'com.fasterxml.jackson.core', name: 'jackson-databind' )
+    compile("org.springframework:spring-jdbc:4.2.0.RELEASE")
+    compile("org.springframework:spring-core:4.2.0.RELEASE")
+    compile 'org.springframework:spring-context:4.2.0.RELEASE'
+    // compile( group:'org.springframework.boot', name: 'spring-boot-starter' )
+    // compile 'org.springframework:spring-beans:4.2.0.RELEASE'
+    // compile( group:'com.fasterxml.jackson.core', name: 'jackson-databind' )
 
     // commons
     compile 'commons-collections:commons-collections:3.2'
@@ -83,32 +95,33 @@ dependencies {
     // solr
     //compile 'org.apache.solr:solr-solrj:5.3.1'
     compile('org.apache.solr:solr-solrj:5.4.1')
+    compile('org.apache.httpcomponents:httpclient:4.4.1')
 
     // flink 0.10.2
-        compile ('org.apache.flink:flink-streaming-java:0.10.2')
-        compile ('org.apache.flink:flink-core:0.10.2')
-        compile ('org.apache.flink:flink-clients:0.10.2')
-        compile ('org.apache.flink:flink-java:0.10.2')
-        compile ('org.apache.flink:flink-connector-kafka:0.10.2')
-        compile ('org.apache.flink:flink-connector-filesystem:0.10.2')
-        compile ('org.apache.flink:flink-hadoop-compatibility:0.10.2')
-        compile ('org.apache.flink:flink-jdbc:0.10.2')
+    compile ('org.apache.flink:flink-streaming-java:0.10.2')
+    compile ('org.apache.flink:flink-core:0.10.2')
+    compile ('org.apache.flink:flink-clients:0.10.2')
+    compile ('org.apache.flink:flink-java:0.10.2')
+    compile ('org.apache.flink:flink-connector-kafka:0.10.2')
+    compile ('org.apache.flink:flink-connector-filesystem:0.10.2')
+    compile ('org.apache.flink:flink-hadoop-compatibility:0.10.2')
+    compile ('org.apache.flink:flink-jdbc:0.10.2')
 
     // flink 1.0.0
-//    compile ('org.apache.flink:flink-core:1.0.0')
-//    compile ('org.apache.flink:flink-java:1.0.0')
-//    compile ('org.apache.flink:flink-jdbc:1.0.0')
-//    compile ('org.apache.flink:flink-annotations:1.0.0')
-//    compile ('org.apache.flink:flink-connector-kafka-0.8_2.10:1.0.0')
-//    compile ('org.apache.flink:flink-connector-filesystem_2.10:1.0.0')
-//    compile ('org.apache.flink:flink-hadoop-compatibility_2.10:1.0.0')
-//    compile ('org.apache.flink:flink-streaming-java_2.10:1.0.0')
-//    compile ('org.apache.flink:flink-clients_2.10:1.0.0')
-//    compile ('org.apache.flink:flink-gelly_2.10:1.0.0')
+    //    compile ('org.apache.flink:flink-core:1.0.0')
+    //    compile ('org.apache.flink:flink-java:1.0.0')
+    //    compile ('org.apache.flink:flink-jdbc:1.0.0')
+    //    compile ('org.apache.flink:flink-annotations:1.0.0')
+    //    compile ('org.apache.flink:flink-connector-kafka-0.8_2.10:1.0.0')
+    //    compile ('org.apache.flink:flink-connector-filesystem_2.10:1.0.0')
+    //    compile ('org.apache.flink:flink-hadoop-compatibility_2.10:1.0.0')
+    //    compile ('org.apache.flink:flink-streaming-java_2.10:1.0.0')
+    //    compile ('org.apache.flink:flink-clients_2.10:1.0.0')
+    //    compile ('org.apache.flink:flink-gelly_2.10:1.0.0')
     // flink 1.0.0 tests
-//    testCompile ('org.apache.flink:flink-tests_2.10:1.0.0')
-//    testCompile ('org.apache.flink:flink-test-utils_2.10:1.0.0')
-//    testCompile ('org.apache.flink:flink-examples-batch_2.10:1.0.0')
+    //    testCompile ('org.apache.flink:flink-tests_2.10:1.0.0')
+    //    testCompile ('org.apache.flink:flink-test-utils_2.10:1.0.0')
+    //    testCompile ('org.apache.flink:flink-examples-batch_2.10:1.0.0')
 
     // kafka
     //compile ('org.apache.kafka:kafka_2.10:0.8.2.0')
@@ -188,8 +201,8 @@ configurations {
     /* We don't want the following dependencies in our shadowJar */
     all*.exclude group: 'org.apache.hadoop'
     all*.exclude group: 'org.apache.hbase'
-    all*.exclude group: 'commons-httpclient'
-        
+    //all*.exclude group: 'commons-httpclient'
+
     runtime.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     runtime.exclude group: 'log4j', module: 'log4j'
     compile.transitive = true

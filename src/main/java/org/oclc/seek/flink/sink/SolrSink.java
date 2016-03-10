@@ -1,13 +1,11 @@
 /****************************************************************************************************************
- *
- *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
- *
+ * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
+
 package org.oclc.seek.flink.sink;
 
 import java.io.IOException;
@@ -16,7 +14,11 @@ import java.util.Map;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.hadoop.shaded.com.google.common.base.Preconditions;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.impl.HttpClientConfigurer;
+import org.apache.solr.client.solrj.impl.HttpClientUtil.HttpClientFactory;
+import org.apache.solr.common.params.ModifiableSolrParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +66,8 @@ public class SolrSink<T> extends RichSinkFunction<T> {
 
     @Override
     public void open(final Configuration configuration) {
-        this.solrClient = new CloudSolrClient(config.get(SOLR_ZK_STRING));
+        this.solrClient = new CloudSolrClient(config.get(SOLR_ZK_STRING), client());
+        // this.solrClient = new CloudSolrClient(config.get(SOLR_ZK_STRING));
         solrClient.setDefaultCollection(COLLECTION);
 
         LOGGER.info("Starting Solr Client to index into collection... [{}]", COLLECTION);
@@ -90,5 +93,15 @@ public class SolrSink<T> extends RichSinkFunction<T> {
 
         // make sure we propagate pending errors
         // checkErroneous();
+    }
+
+    /**
+     * @param config
+     * @return
+     */
+    private DefaultHttpClient client() {
+        DefaultHttpClient httpClient = HttpClientFactory.createHttpClient();
+        new HttpClientConfigurer().configure(httpClient, new ModifiableSolrParams());
+        return httpClient;
     }
 }

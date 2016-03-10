@@ -17,7 +17,12 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class EntryFind extends GenericRecord {// extends BaseObject {
+import com.google.gson.Gson;
+
+/**
+ *
+ */
+public class EntryFind extends GenericRecord {
 
     /** default serial version UID */
     protected static final long serialVersionUID = 1L;
@@ -1090,4 +1095,11 @@ public class EntryFind extends GenericRecord {// extends BaseObject {
         return ToStringBuilder.reflectionToString(this);
     }
 
+    /**
+     * @return
+     */
+    public String toJson() {
+        String s = new Gson().toJson(this);
+        return s;
+    }
 }

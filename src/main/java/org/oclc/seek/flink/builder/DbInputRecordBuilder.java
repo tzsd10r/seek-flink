@@ -24,12 +24,12 @@ public class DbInputRecordBuilder {
     }
 
     public DbInputRecordBuilder ownerInstitution(final Long ownerInstitution) {
-        dbInputRecord.setOwnerInstitution(ownerInstitution);
+        // dbInputRecord.setOwnerInstitution(ownerInstitution);
         return this;
     }
 
     public DbInputRecordBuilder collectionUid(final String collectionUid) {
-        dbInputRecord.setCollectionUid(collectionUid);
+        // dbInputRecord.setCollectionUid(collectionUid);
         return this;
     }
 }
