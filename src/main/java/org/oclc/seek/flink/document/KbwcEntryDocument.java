@@ -11,6 +11,7 @@
 
 package org.oclc.seek.flink.document;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -25,12 +26,13 @@ import org.apache.solr.client.solrj.beans.Field;
  * Model object for handling entry_find table
  *
  */
-public class KbwcEntryDocument implements java.io.Serializable {
+public class KbwcEntryDocument implements Serializable {
 
     /** default serial version UID */
     private static final long serialVersionUID = 1L;
     private static final String REGEX_LN = "\r\n?|\n";
-    private static final String KBWC = "kbwc";
+    private static final String KBWC = "seabrae";
+    // private static final String KBWC = "kbwc";
     private static final String COLL_TYPE = "kbwc.coll_type=";
     private static final String VENDOR_ID = "kbwc.vendor_id=";
 

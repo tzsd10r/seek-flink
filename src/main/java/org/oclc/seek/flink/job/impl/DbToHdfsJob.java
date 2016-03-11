@@ -59,20 +59,20 @@ public class DbToHdfsJob extends JobGeneric implements JobContract {
             parameterTool.getRequired("db.user"),
             parameterTool.getRequired("db.password"));
 
-        // DBInputFormat.setInput(conf,
-        // DbInputRecord.class,
-        // parameterTool.getRequired("db.table"),
-        // null,
-        // null,
-        // new String[] {
-        // parameterTool.getRequired("db.fields")
-        // });
-
         DBInputFormat.setInput(conf,
             DbInputRecord.class,
-            "select * from " + table,
-            "select count(*) from" + table
-            );
+            parameterTool.getRequired("db.table"),
+            null,
+            null,
+            new String[] {
+                parameterTool.getRequired("db.fields")
+            });
+
+        // DBInputFormat.setInput(conf,
+        // DbInputRecord.class,
+        // "select * from " + table,
+        // "select count(*) from" + table
+        // );
 
         HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
             new HadoopInputFormat<LongWritable, DbInputRecord>(

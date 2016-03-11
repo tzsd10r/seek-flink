@@ -23,9 +23,6 @@ public class KafkaSinkBuilder {
      * @param properties
      * @return an instance of {@link FlinkKafkaProducer08}
      */
-    // public SinkFunction<String> build(final String topic, final Properties properties) {
-    // return new FlinkKafkaProducer08<String>(topic, new StringSerializerSchema(), properties);
-    // }
     public SinkFunction<String> build(final String topic, final Properties properties) {
         return new FlinkKafkaProducer<String>(topic, new StringSerializerSchema(), properties);
     }

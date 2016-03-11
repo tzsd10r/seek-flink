@@ -22,10 +22,8 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class EntryFind extends GenericRecord {
-
-    /** default serial version UID */
-    protected static final long serialVersionUID = 1L;
+public class EntryFind implements BaseObject {
+    private static final long serialVersionUID = 1L;
 
     /** Non Indexed fields */
     private Long optimisticLock;
@@ -1096,10 +1094,18 @@ public class EntryFind extends GenericRecord {
     }
 
     /**
-     * @return
+     * @return an json record
      */
     public String toJson() {
         String s = new Gson().toJson(this);
         return s;
+    }
+
+    /**
+     * @param json
+     * @return an json record
+     */
+    public EntryFind fromJson(final String json) {
+        return new Gson().fromJson(json, this.getClass());
     }
 }

@@ -10,10 +10,6 @@ package org.oclc.seek.flink.record;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.google.gson.Gson;
 
 /**
  *
@@ -24,39 +20,26 @@ public class DbInputRecord extends GenericRecord {
     private String user;
     private String password;
     private String table;
-    private Map<String, Object> map = new HashMap<String, Object>();
     private EntryFind entryFind;
 
     private String[] fields = new String[] {
-        "owner_institution", "collection_uid"
     };
 
-    // private Long ownerInstitution;
-    // private String collectionUid;
+    // private String[] fields = new String[] {
+    // "owner_institution", "collection_uid"
+    // };
 
     @Override
     public void readFields(final ResultSet rs) throws SQLException {
         entryFind = EntryFindMapper.mapRow(rs);
-        // setOwnerInstitution(rs.getLong("owner_institution"));
-        // setCollectionUid(rs.getString("collection_uid"));
     }
-
-    // public void setOwnerInstitution(final Long ownerInstitution) {
-    // this.ownerInstitution = ownerInstitution;
-    // map.put(fields[0], ownerInstitution);
-    // }
-    //
-    // public void setCollectionUid(final String collectionUid) {
-    // this.collectionUid = collectionUid;
-    // map.put(fields[1], collectionUid);
-    // }
 
     /**
      * @return
      */
     public String toJson() {
         String s = entryFind.toJson();
-        // System.out.println(s);
+        System.out.println(s);
         return s;
     }
 

@@ -8,8 +8,9 @@
 
 package org.oclc.seek.flink.sink;
 
-import java.io.IOException;
 import java.util.Map;
+
+import org.apache.flink.hadoop.shaded.com.google.common.base.Preconditions;
 
 /**
  * @param <T>
@@ -17,11 +18,20 @@ import java.util.Map;
 public class SolrSinkBuilder<T> {
 
     /**
-     * @param config
+     * @param solrConfig
      * @return an instance of {@link SolrSink}
-     * @throws IOException
      */
-    public SolrSink<T> build(final Map<String, String> config) {
-        return new SolrSink<T>(config);
+    public SolrSink<T> build(final Map<String, String> solrConfig) {
+        Preconditions.checkNotNull(solrConfig, "solrConfig not set");
+        return new SolrSink<T>(solrConfig);
+    }
+
+    /**
+     * @param zkHosts
+     * @return an instance of {@link SolrSink}
+     */
+    public SolrSink<T> build(final String zkHosts) {
+        Preconditions.checkNotNull(zkHosts, "zkHosts not set");
+        return new SolrSink<T>(zkHosts);
     }
 }

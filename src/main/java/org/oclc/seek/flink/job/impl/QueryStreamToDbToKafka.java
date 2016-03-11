@@ -90,6 +90,7 @@ public class QueryStreamToDbToKafka extends JobGeneric implements Serializable {
         final String password = parameterTool.getRequired("db.password");
 
         final DataSource datasource = new DriverManagerDataSource(url, user, password);
+        final JdbcTemplate jdbcTemplate = new JdbcTemplate(datasource);
 
         /*
          * Query Generator stream
@@ -102,14 +103,14 @@ public class QueryStreamToDbToKafka extends JobGeneric implements Serializable {
         DataStream<List<EntryFind>> records = queries.map(new RichMapFunction<String, List<EntryFind>>() {
             private static final long serialVersionUID = 1L;
             private LongCounter recordCount = new LongCounter();
-            private transient JdbcTemplate jdbcTemplate;
+
+            // private transient JdbcTemplate jdbcTemplate;
 
             @Override
             public void open(final Configuration parameters) throws Exception {
                 super.open(parameters);
                 getRuntimeContext().addAccumulator("recordCount", recordCount);
-
-                jdbcTemplate = new JdbcTemplate(datasource);
+                // jdbcTemplate = new JdbcTemplate(datasource);
             }
 
             @Override

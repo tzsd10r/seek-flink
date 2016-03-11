@@ -26,26 +26,18 @@ import org.apache.hadoop.mapred.lib.db.DBWritable;
 public class GenericRecord implements Writable, DBWritable {
     @Override
     public void readFields(final ResultSet arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void write(final PreparedStatement arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void readFields(final DataInput arg0) throws IOException {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void write(final DataOutput arg0) throws IOException {
-        // TODO Auto-generated method stub
-
     }
 
 }

@@ -41,7 +41,7 @@ public class KafkaToKafkaJob extends JobGeneric implements Serializable {
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
         // create a checkpoint every 5 seconds
-        env.enableCheckpointing(5000);
+        // env.enableCheckpointing(5000);
 
         // defines how many times the job is restarted after a failure
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
@@ -55,7 +55,7 @@ public class KafkaToKafkaJob extends JobGeneric implements Serializable {
             .addSource(new KafkaSourceBuilder().build(
                 parameterTool.get(prefix + ".kafka.src.topic"),
                 parameterTool.getProperties())).name("kafka source")
-            .rebalance();
+                .rebalance();
 
         DataStream<String> enrichedJsonRecords = jsonRecords.map(new RichMapFunction<String, String>() {
             private static final long serialVersionUID = 1L;
@@ -78,7 +78,7 @@ public class KafkaToKafkaJob extends JobGeneric implements Serializable {
             new KafkaSinkBuilder().build(
                 parameterTool.get(prefix + ".kafka.stage.topic"),
                 parameterTool.getProperties()))
-            .name("kafka stage");
+                .name("kafka stage");
 
         env.execute("Read Events from Kafka Source and write to Kafka Stage");
     }
