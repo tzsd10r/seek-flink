@@ -143,7 +143,7 @@ public class QueryStreamToDbToKafka extends JobGeneric implements Serializable {
                 parameterTool.getProperties()))
                 .name("kafka stage");
 
-        env.execute("Read Events from Kafka Source and write to Kafka Stage");
+        env.execute("Receives SQL queries... executes them and then writes to Kafka stage");
     }
 
     /**

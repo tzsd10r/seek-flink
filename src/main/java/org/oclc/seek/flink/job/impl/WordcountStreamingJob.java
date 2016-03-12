@@ -8,16 +8,15 @@
 
 package org.oclc.seek.flink.job.impl;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.shaded.com.google.common.collect.Iterables;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.job.JobGeneric;
 
@@ -38,41 +37,63 @@ public class WordcountStreamingJob extends JobGeneric {
 
         DataStream<String> lines = env.readTextFile(parameterTool.getRequired("fs.wordcount.source"));
 
+        // KeyedStream<String, String> keyedStream = lines.keyBy(new KeySelector<String, String>() {
+        // private static final long serialVersionUID = 1L;
+        //
+        // @Override
+        // public String getKey(final String line) throws Exception {
+        // return line;
+        // }
+        // });
+
+        // DataStream<String> filtered = lines.filter(new FilterFunction<String>() {
+        // private static final long serialVersionUID = 1L;
+        //
+        // @Override
+        // public boolean filter(final String value) throws Exception {
+        // return !StringUtils.isBlank(value);
+        // }
+        // });
+
+        DataStream<Tuple2<String, Long>> transformed = lines.flatMap(new Tokenizer()).keyBy(0).sum(1);
+
         // DataStream<Tuple2<String, Integer>> words = lines.flatMap(new Tokenizer()).keyBy(0).sum(1);
-        DataStream<Word> words =
-            lines.flatMap(new Tokenizer())
-            .keyBy(0)
-            .timeWindow(Time.milliseconds(5000))
-            // .countWindow(1000)
-            // .apply(new WindowFunction<Tuple2<String, Long>, Tuple3<String, Long, Long>, Tuple,
-            // GlobalWindow>() {
-            // private static final long serialVersionUID = 1L;
-            //
-            // @Override
-            // public void apply(final Tuple arg0, final GlobalWindow window,
-            // final Iterable<Tuple2<String, Long>> values,
-            // final Collector<Tuple3<String, Long, Long>> collector) throws Exception {
-            // Long elapsedMillis = window.maxTimestamp();
-            // collector.collect(new Tuple3<String, Long, Long>("Words: ", elapsedMillis,
-            // new Long(Iterables.size(values))));
-            // }
-            // });
 
-            .apply(new WindowFunction<Tuple2<String, Long>, Word, Tuple, TimeWindow>() {
-                private static final long serialVersionUID = 1L;
+        //KeyedStream<Tuple2<String, Long>, Tuple> words =
+        //    lines.flatMap(new Tokenizer())
+        //    .keyBy(0)
+        //.timeWindow(Time.milliseconds(5000))
 
-                @Override
-                public void apply(final Tuple windowKey, final TimeWindow window,
-                    final Iterable<Tuple2<String, Long>> values, final Collector<Word> collector) throws Exception {
-                    Long processingTime = window.getEnd() - window.getStart();
-                    String word = values.iterator().next().f0;
-                    Long count = new Long(Iterables.size(values));
+        // .countWindow(1000)
+        // .apply(new WindowFunction<Tuple2<String, Long>, Tuple3<String, Long, Long>, Tuple,
+        // GlobalWindow>() {
+        // private static final long serialVersionUID = 1L;
+        //
+        // @Override
+        // public void apply(final Tuple arg0, final GlobalWindow window,
+        // final Iterable<Tuple2<String, Long>> values,
+        // final Collector<Tuple3<String, Long, Long>> collector) throws Exception {
+        // Long elapsedMillis = window.maxTimestamp();
+        // collector.collect(new Tuple3<String, Long, Long>("Words: ", elapsedMillis,
+        // new Long(Iterables.size(values))));
+        // }
+        // });
 
-                    collector.collect(new Word(word, processingTime, count));
-                }
-            });
+        // .apply(new WindowFunction<Tuple2<String, Long>, Word, Tuple, TimeWindow>() {
+        // private static final long serialVersionUID = 1L;
+        //
+        // @Override
+        // public void apply(final Tuple windowKey, final TimeWindow window,
+        // final Iterable<Tuple2<String, Long>> values, final Collector<Word> collector) throws Exception {
+        // Long processingTime = window.getEnd() - window.getStart();
+        // String word = values.iterator().next().f0;
+        // Long count = new Long(Iterables.size(values));
+        //
+        // collector.collect(new Word(word, processingTime, count));
+        // }
+        // });
 
-        words.writeAsText(parameterTool.getRequired("fs.wordcount.output")).name("Filesystem");
+        transformed.writeAsText(parameterTool.getRequired("fs.wordcount.output")).name("Filesystem");
 
         env.execute("Wordcount streaming");
     }
@@ -128,6 +149,20 @@ public class WordcountStreamingJob extends JobGeneric {
         public void setCount(final Long count) {
             this.count = count;
         }
+    }
+
+    /**
+     * @param args
+     * @throws Exception
+     */
+    public static void main(final String[] args) throws Exception {
+        System.setProperty("environment", "local");
+
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+        // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        WordcountStreamingJob job = new WordcountStreamingJob();
+        job.init();
+        job.execute(env);
     }
 
 }
