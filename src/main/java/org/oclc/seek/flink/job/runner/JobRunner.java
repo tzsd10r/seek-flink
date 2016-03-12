@@ -35,18 +35,11 @@ import org.oclc.seek.flink.job.impl.WordcountStreamingJob;
 public class JobRunner {
     /**
      * @param topologyName
-     */
-    public void run(final String topologyName) {
-        run(topologyName, null);
-    }
-
-    /**
-     * @param topologyName
      * @param query
      */
-    public void run(final String topologyName, final String query) {
+    public void run(final String topologyName) {
         try {
-            JobContract jobContract = JobFactory.get(topologyName, query);
+            JobContract jobContract = JobFactory.get(topologyName);
             StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
             jobContract.execute(env);
         } catch (InstantiationException | IllegalAccessException e) {

@@ -54,12 +54,11 @@ public class JobFactory {
 
     /**
      * @param topologyName
-     * @param query
      * @return a JobContract
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    public static JobContract get(final String topologyName, final String query) throws InstantiationException,
+    public static JobContract get(final String topologyName) throws InstantiationException,
     IllegalAccessException {
         JobGeneric jobContract = null;
 
@@ -71,23 +70,8 @@ public class JobFactory {
 
         jobContract = (JobGeneric) topologyClass.newInstance();
 
-        if (query != null) {
-            jobContract.init(query);
-            jobContract.init();
-        } else {
-            jobContract.init();
-        }
+        jobContract.init();
 
         return jobContract;
-    }
-
-    /**
-     * @param topologyName
-     * @return a JobContract
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     */
-    public static JobContract get(final String topologyName) throws InstantiationException, IllegalAccessException {
-        return get(topologyName, null);
     }
 }

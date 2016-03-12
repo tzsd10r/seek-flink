@@ -11,7 +11,6 @@ package org.oclc.seek.flink.builder;
 import org.oclc.seek.flink.record.BaseObject;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * @param <R>
@@ -24,16 +23,15 @@ public class DocumentBuilder<R> implements DocumentBuilderContract<R> {
      * @return an instance of type R
      */
     @Override
-    public R build(final BaseObject input) {
+    public R build(final BaseObject input, final Class<R> clazz) {
         if (input == null) {
             return null;
         }
 
         Gson g = new Gson();
-        String s = g.toJson(input);
+        String json = g.toJson(input);
 
-        return g.fromJson(s, new TypeToken<Class<R>>() {
-        }.getType());
+        return g.fromJson(json, clazz);
     }
 
     // @SuppressWarnings("unchecked")

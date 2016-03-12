@@ -10,7 +10,6 @@ package org.oclc.seek.flink.job.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -19,11 +18,10 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.builder.Tuple2Builder;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.util.Collector;
-import org.oclc.seek.flink.job.BatchJobGeneric;
+import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.source.JDBCSource;
 
 import com.google.gson.Gson;
@@ -31,21 +29,10 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class DBImportIssnlJob extends BatchJobGeneric {
-    private Properties props = new Properties();
-
-    @Override
-    public void init(final String query) {
-        props.put("query", query);
-    }
-
-    /**
-     *
-     */
+public class DBImportIssnlJob extends JobGeneric {
     @Override
     public void init() {
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override
@@ -101,8 +88,8 @@ public class DBImportIssnlJob extends BatchJobGeneric {
                 output.collect(new Gson().toJson(map));
             }
         }).withParameters(parameterTool.getConfiguration())
-            .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
-                WriteMode.OVERWRITE)
+        .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
+            WriteMode.OVERWRITE)
             .name("filesystem sink");
 
         env.execute("Fetching Data from Database");

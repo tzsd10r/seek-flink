@@ -10,7 +10,6 @@ package org.oclc.seek.flink.job.impl;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.Properties;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -20,7 +19,6 @@ import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.hadoop.mapreduce.HadoopInputFormat;
 import org.apache.flink.api.java.hadoop.mapreduce.HadoopOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.hadoopcompatibility.mapred.HadoopMapFunction;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -36,51 +34,22 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.oclc.seek.flink.job.BatchJobGeneric;
+import org.oclc.seek.flink.job.JobGeneric;
 
 /**
  *
  */
-public class WordCountJob extends BatchJobGeneric {
-    private Properties props = new Properties();
-
+public class WordCountJob extends JobGeneric {
     @Override
     public void init() {
-        // ClassLoader cl = ClassLoader.getSystemClassLoader();
-        //
-        // URL[] urls = ((URLClassLoader)cl).getURLs();
-        //
-        // for(URL url: urls){
-        // System.out.println(url.getFile());
-        // }
-
-        String env = System.getProperty("environment");
-        String test = System.getProperty("test");
-        String configFile = "conf/config." + env + ".properties";
-
-        if (test != null) {
-            configFile = "config.test.properties";
-        }
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override
     public void execute(final ExecutionEnvironment env) throws Exception {
-        // ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-
         // Set up the Hadoop Input Format
         Job job = Job.getInstance();
+
         HadoopInputFormat<LongWritable, Text> hadoopInputFormat = new HadoopInputFormat<LongWritable, Text>(
             new TextInputFormat(), LongWritable.class, Text.class, job);
         FileInputFormat.addInputPath(job, new Path(parameterTool.getRequired("hdfs.wordcount.source")));

@@ -8,10 +8,6 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Properties;
-
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.accumulators.LongCounter;
@@ -20,51 +16,23 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapred.lib.db.DBInputFormat;
-import org.oclc.seek.flink.job.BatchJobGeneric;
+import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
 
 /**
  *
  */
-public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
-    private Properties props = new Properties();
-
-    @Override
-    public void init(final String query) {
-        props.put("query", query);
-    }
+public class DBImportHadoopToHdfsJob extends JobGeneric {
 
     @Override
     public void init() {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
-
-        String env = System.getProperty("environment");
-        String configFile = "conf/config." + env + ".properties";
-
-        System.out.println("Using this config file... [" + configFile + "]");
-
-        try {
-            props.load(ClassLoader.getSystemResourceAsStream(configFile));
-        } catch (Exception e) {
-            System.out.println("Failed to load the properties file... [" + configFile + "]");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
-        }
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override
@@ -134,8 +102,8 @@ public class DBImportHadoopToHdfsJob extends BatchJobGeneric {
          * send records to hdfs
          */
         records
-            .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
-                WriteMode.OVERWRITE)
+        .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
+            WriteMode.OVERWRITE)
             .name("filesystem sink");
 
         // Setup Hadoop’s TextOutputFormat

@@ -40,7 +40,7 @@ public class SolrSink<T> extends RichSinkFunction<T> {
      * @param solrConfig
      */
     public SolrSink(final Map<String, String> solrConfig) {
-        Preconditions.checkNotNull(solrConfig, "solrConfig not set");
+        isValid(solrConfig, "solrConfig");
 
         this.solrConfig = solrConfig;
 
@@ -48,7 +48,7 @@ public class SolrSink<T> extends RichSinkFunction<T> {
         // Also... ensure we can connect and ping
         try {
             CloudSolrClient client = new CloudSolrClient(solrConfig.get(ZKHOSTS));
-            client.setDefaultCollection(COLLECTION);
+            client.setDefaultCollection(solrConfig.get(COLLECTION));
             client.connect();
             client.ping();
             client.close();
@@ -61,19 +61,28 @@ public class SolrSink<T> extends RichSinkFunction<T> {
 
     /**
      * @param zkHosts
+     * @param collection
      */
-    public SolrSink(final String zkHosts) {
+    public SolrSink(final String zkHosts, final String collection) {
         this(ImmutableMap
-            .of(ZKHOSTS, zkHosts == null ? Preconditions.checkNotNull(zkHosts, "zkHosts not set") : zkHosts));
+            .of(ZKHOSTS, isValid(zkHosts, "zkHosts"), COLLECTION, isValid(collection, "collection")));
+    }
+
+    /**
+     * @param value
+     * @param name
+     * @return the same instance parameter to be checked... if not null
+     */
+    public static <OBJ> OBJ isValid(final OBJ value, final String name) {
+        return Preconditions.checkNotNull(value, name + " is not set");
     }
 
     @Override
     public void open(final Configuration configuration) {
-        // this.solrClient = new CloudSolrClient(solrConfig.get(ZKHOSTS), client());
         this.solrClient = new CloudSolrClient(solrConfig.get(ZKHOSTS));
-        solrClient.setDefaultCollection(COLLECTION);
+        solrClient.setDefaultCollection(solrConfig.get(COLLECTION));
 
-        LOGGER.info("Starting Solr Client to index into collection... [{}]", COLLECTION);
+        LOGGER.info("Starting Solr Client to index into collection... [{}]", solrConfig.get(COLLECTION));
     }
 
     @Override
@@ -82,7 +91,8 @@ public class SolrSink<T> extends RichSinkFunction<T> {
             LOGGER.debug("Emitting data into Solr: {}", document);
         }
 
-        solrClient.addBean(document, 500);
+        solrClient.addBean(document);
+        // solrClient.addBean(document, 500);
     }
 
     @Override

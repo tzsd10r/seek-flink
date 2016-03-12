@@ -10,7 +10,6 @@ package org.oclc.seek.flink.job.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -19,11 +18,10 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.builder.Tuple2Builder;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.util.Collector;
-import org.oclc.seek.flink.job.BatchJobGeneric;
+import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.source.JDBCSource;
 
 import com.google.gson.Gson;
@@ -31,20 +29,11 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class DBImportEntryFindJob extends BatchJobGeneric {
-    private Properties props = new Properties();
+public class DBImportEntryFindJob extends JobGeneric {
 
-    @Override
-    public void init(final String query) {
-        props.put("query", query);
-    }
-    /**
-     *
-     */
     @Override
     public void init() {
-
-        parameterTool = ParameterTool.fromMap(propertiesToMap(props));
+        super.init();
     }
 
     @Override

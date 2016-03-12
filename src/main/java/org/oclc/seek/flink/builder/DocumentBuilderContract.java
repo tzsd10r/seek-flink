@@ -20,7 +20,8 @@ import org.oclc.seek.flink.record.BaseObject;
 public interface DocumentBuilderContract<R> extends Serializable {
     /**
      * @param input
+     * @param clazz
      * @return an instance of R
      */
-    public R build(final BaseObject input);
+    public R build(final BaseObject input, final Class<R> clazz);
 }

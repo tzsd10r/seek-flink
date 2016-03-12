@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -22,13 +23,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  *
  */
 public abstract class JobGeneric implements JobContract {
+    private static final long serialVersionUID = 1L;
     protected ParameterTool parameterTool;
-
-    /**
-     * @param query
-     */
-    public void init(final String query) {
-    }
 
     @Override
     public void init() {
@@ -82,6 +78,10 @@ public abstract class JobGeneric implements JobContract {
     }
 
     @Override
-    public abstract void execute(StreamExecutionEnvironment env) throws Exception;
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
+    };
 
+    @Override
+    public void execute(final ExecutionEnvironment env) throws Exception {
+    };
 }

@@ -10,16 +10,26 @@
  ******************************************************************************************************************/
 package org.oclc.seek.flink.job;
 
+import java.io.Serializable;
+
+import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 /**
  *
  */
-public interface JobContract {
+public interface JobContract extends Serializable {
     /**
+     * @param env
      * @throws Exception
      */
     public void execute(StreamExecutionEnvironment env) throws Exception;
+
+    /**
+     * @param env
+     * @throws Exception
+     */
+    public void execute(ExecutionEnvironment env) throws Exception;
 
     /**
      *
