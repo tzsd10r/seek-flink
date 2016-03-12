@@ -18,7 +18,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.builder.DbInputRecordBuilder;
-import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.SolrSinkBuilder;
@@ -26,7 +25,8 @@ import org.oclc.seek.flink.sink.SolrSinkBuilder;
 /**
  *
  */
-public class SolrEmitterJob extends JobGeneric implements JobContract {
+public class SolrEmitterJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
@@ -75,7 +75,7 @@ public class SolrEmitterJob extends JobGeneric implements JobContract {
 
         // jsonRecords.addSink(new SolrSinkBuilder<String>(config, new SolrDocumentBuilder()))
         jsonRecords.addSink(new SolrSinkBuilder<String>().build(config))
-        .name("solr");
+            .name("Index to solr");
 
         env.execute("Writes json records to Solr from a stream of generated records");
     }

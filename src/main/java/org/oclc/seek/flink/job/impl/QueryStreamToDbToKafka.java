@@ -139,7 +139,7 @@ public class QueryStreamToDbToKafka extends JobGeneric implements Serializable {
         // DataStreamSink<String> kafka =
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get(prefix + ".kafka.stage.topic"),
+                parameterTool.get("kafka.stage.topic." + prefix),
                 parameterTool.getProperties()))
                 .name("kafka stage");
 

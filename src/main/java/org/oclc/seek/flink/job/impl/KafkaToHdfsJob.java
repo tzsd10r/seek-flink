@@ -10,7 +10,6 @@ package org.oclc.seek.flink.job.impl;
 
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.sink.HdfsSinkBuilder;
 import org.oclc.seek.flink.source.KafkaSourceBuilder;
@@ -18,7 +17,8 @@ import org.oclc.seek.flink.source.KafkaSourceBuilder;
 /**
  *
  */
-public class KafkaToHdfsJob extends JobGeneric implements JobContract {
+public class KafkaToHdfsJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
@@ -40,12 +40,13 @@ public class KafkaToHdfsJob extends JobGeneric implements JobContract {
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         DataStreamSource<String> stream = env.addSource(new KafkaSourceBuilder().build(
-            parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+            "kafka.src.topic." + parameterTool.getRequired("db.table"),
             parameterTool.getProperties()), "kafka source");
 
         stream
-        .addSink(new HdfsSinkBuilder().build(parameterTool.get(parameterTool.getRequired("db.table") + ".fs.stage.dir")))
-        .name("filesystem sink");
+        .addSink(
+            new HdfsSinkBuilder().build("fs.stage.dir." + parameterTool.getRequired("db.table")))
+            .name("filesystem sink");
 
         env.execute("Read Events from Kafka and write to HDFS");
     }

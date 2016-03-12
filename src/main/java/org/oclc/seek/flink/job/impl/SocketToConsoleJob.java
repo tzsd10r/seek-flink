@@ -16,13 +16,13 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
-import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 
 /**
  *
  */
-public class SocketToConsoleJob extends JobGeneric implements JobContract {
+public class SocketToConsoleJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {

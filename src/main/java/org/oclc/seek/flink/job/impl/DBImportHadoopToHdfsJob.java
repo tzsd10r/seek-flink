@@ -29,6 +29,7 @@ import org.oclc.seek.flink.record.DbInputRecord;
  *
  */
 public class DBImportHadoopToHdfsJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
@@ -102,8 +103,9 @@ public class DBImportHadoopToHdfsJob extends JobGeneric {
          * send records to hdfs
          */
         records
-        .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
-            WriteMode.OVERWRITE)
+        .writeAsText(
+            parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"))
+            + "/entry-find.txt", WriteMode.OVERWRITE)
             .name("filesystem sink");
 
         // Setup Hadoop’s TextOutputFormat

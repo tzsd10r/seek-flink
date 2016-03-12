@@ -19,7 +19,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapred.lib.db.DBInputFormat;
-import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
@@ -27,7 +26,8 @@ import org.oclc.seek.flink.sink.KafkaSinkBuilder;
 /**
  *
  */
-public class DbToKafkaJob extends JobGeneric implements JobContract {
+public class DbToKafkaJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
@@ -109,7 +109,7 @@ public class DbToKafkaJob extends JobGeneric implements JobContract {
         // DataStreamSink<String> kafka =
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get(table + ".kafka.sink.topic"),
+                parameterTool.get("kafka.sink.topic." + table),
                 parameterTool.getProperties()))
                 .name("put json records on Kafka");
 

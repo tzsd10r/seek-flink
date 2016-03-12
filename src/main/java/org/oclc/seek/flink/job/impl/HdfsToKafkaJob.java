@@ -14,14 +14,14 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
-import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
 
 /**
  *
  */
-public class HdfsToKafkaJob extends JobGeneric implements JobContract {
+public class HdfsToKafkaJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
@@ -40,7 +40,7 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
         // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
 
         DataStream<String> text =
-            env.readFileStream(parameterTool.getRequired(parameterTool.getRequired("db.table") + ".fs.src.dir"), 1000,
+            env.readFileStream("fs.src.dir." + parameterTool.getRequired("db.table"), 1000,
                 WatchType.ONLY_NEW_FILES);
 
         text.map(new RichMapFunction<String, String>() {
@@ -61,7 +61,7 @@ public class HdfsToKafkaJob extends JobGeneric implements JobContract {
         }).name("json-records")
         .addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.stage.topic"),
+                parameterTool.get("kafka.stage.topic." + parameterTool.getRequired("db.table")),
                 parameterTool.getProperties()))
                 .name("kafka-stage");
 

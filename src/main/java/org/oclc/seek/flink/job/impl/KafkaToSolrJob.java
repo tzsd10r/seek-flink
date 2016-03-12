@@ -29,6 +29,8 @@ import org.oclc.seek.flink.source.KafkaSourceBuilder;
  *
  */
 public class KafkaToSolrJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public void init() {
         super.init();
@@ -53,7 +55,7 @@ public class KafkaToSolrJob extends JobGeneric {
             .of(SolrSink.ZKHOSTS, zkHosts, SolrSink.COLLECTION, collection);
 
         DataStream<String> jsonRecords = env.addSource(new KafkaSourceBuilder().build(
-            parameterTool.get(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+            parameterTool.get("kafka.src.topic." + parameterTool.getRequired("db.table")),
             parameterTool.getProperties())).name("Listens to json records from Kafka");
 
         // DataStream<String> jsonRecords = env.addSource(new KafkaSourceBuilder().build(

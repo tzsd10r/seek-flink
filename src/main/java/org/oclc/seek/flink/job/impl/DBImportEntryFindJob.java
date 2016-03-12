@@ -30,6 +30,7 @@ import com.google.gson.Gson;
  *
  */
 public class DBImportEntryFindJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void init() {
@@ -90,7 +91,9 @@ public class DBImportEntryFindJob extends JobGeneric {
                 output.collect(new Gson().toJson(map));
             }
         }).withParameters(parameterTool.getConfiguration())
-        .writeAsText(parameterTool.get("db.table" + parameterTool.get(".fs.sink.dir")) + "/entry-find.txt",
+        .writeAsText(
+            parameterTool.get(".fs.sink.dir." + parameterTool.get("db.table"))
+            + "/entry-find.txt",
             WriteMode.OVERWRITE)
             .name("filesystem sink");
 

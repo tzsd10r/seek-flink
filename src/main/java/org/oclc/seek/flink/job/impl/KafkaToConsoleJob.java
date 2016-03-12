@@ -1,13 +1,11 @@
 /****************************************************************************************************************
- *
- *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
- *
+ * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
+
 package org.oclc.seek.flink.job.impl;
 
 import java.util.HashMap;
@@ -17,14 +15,15 @@ import java.util.Properties;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.oclc.seek.flink.job.JobContract;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.source.KafkaSourceBuilder;
 
 /**
  *
  */
-public class KafkaToConsoleJob extends JobGeneric implements JobContract {
+public class KafkaToConsoleJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public void init() {
         super.init();
@@ -64,9 +63,8 @@ public class KafkaToConsoleJob extends JobGeneric implements JobContract {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-
         DataStream<String> stream = env.addSource(new KafkaSourceBuilder().build(
-            parameterTool.getRequired(parameterTool.getRequired("db.table") + ".kafka.src.topic"),
+            "kafka.src.topic." + parameterTool.getRequired("db.table"),
             parameterTool.getProperties()), "kafka source");
 
         // write kafka stream to standard out.

@@ -27,6 +27,9 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
+/**
+ *
+ */
 public class ExampleJob {
 
     public void complexIntegrationTest2() throws Exception {

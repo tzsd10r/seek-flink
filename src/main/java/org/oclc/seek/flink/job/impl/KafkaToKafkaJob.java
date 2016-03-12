@@ -8,8 +8,6 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import java.io.Serializable;
-
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
@@ -27,7 +25,7 @@ import org.oclc.seek.flink.source.KafkaSourceBuilder;
  * - "group.id" the id of the consumer group
  * - "topic" the name of the topic to read data from.
  */
-public class KafkaToKafkaJob extends JobGeneric implements Serializable {
+public class KafkaToKafkaJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -53,7 +51,7 @@ public class KafkaToKafkaJob extends JobGeneric implements Serializable {
 
         DataStream<String> jsonRecords = env
             .addSource(new KafkaSourceBuilder().build(
-                parameterTool.get(prefix + ".kafka.src.topic"),
+                parameterTool.get("kafka.src.topic." + prefix),
                 parameterTool.getProperties())).name("kafka source")
                 .rebalance();
 
@@ -76,7 +74,7 @@ public class KafkaToKafkaJob extends JobGeneric implements Serializable {
 
         DataStreamSink<String> kafka = enrichedJsonRecords.addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get(prefix + ".kafka.stage.topic"),
+                parameterTool.get("kafka.stage.topic." + prefix),
                 parameterTool.getProperties()))
                 .name("kafka stage");
 

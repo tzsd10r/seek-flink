@@ -36,7 +36,7 @@ public class WordcountStreamingJob extends JobGeneric {
     public void execute(final StreamExecutionEnvironment env) throws Exception {
         env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
 
-        DataStream<String> lines = env.readTextFile(parameterTool.getRequired("hdfs.wordcount.source"));
+        DataStream<String> lines = env.readTextFile(parameterTool.getRequired("fs.wordcount.source"));
 
         // DataStream<Tuple2<String, Integer>> words = lines.flatMap(new Tokenizer()).keyBy(0).sum(1);
         DataStream<Word> words =
@@ -72,7 +72,7 @@ public class WordcountStreamingJob extends JobGeneric {
                 }
             });
 
-        words.writeAsText(parameterTool.getRequired("hdfs.wordcount.output")).name("Filesystem");
+        words.writeAsText(parameterTool.getRequired("fs.wordcount.output")).name("Filesystem");
 
         env.execute("Wordcount streaming");
     }

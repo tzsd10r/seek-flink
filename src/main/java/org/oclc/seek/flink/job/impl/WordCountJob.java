@@ -40,6 +40,8 @@ import org.oclc.seek.flink.job.JobGeneric;
  *
  */
 public class WordCountJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public void init() {
         super.init();
@@ -52,13 +54,13 @@ public class WordCountJob extends JobGeneric {
 
         HadoopInputFormat<LongWritable, Text> hadoopInputFormat = new HadoopInputFormat<LongWritable, Text>(
             new TextInputFormat(), LongWritable.class, Text.class, job);
-        FileInputFormat.addInputPath(job, new Path(parameterTool.getRequired("hdfs.wordcount.source")));
+        FileInputFormat.addInputPath(job, new Path(parameterTool.getRequired("fs.wordcount.source")));
 
         // 1. Create a Flink job
         // 2. Read data using the Hadoop FileInputFormat
         // - The date that is read from Hadoop InputFormats is converted into a DataSet<Tuple2<KEY,VALUE>> where
         // KEY is the key and VALUE is the value of the original Hadoop key-value pair.
-        DataSet<Tuple2<LongWritable, Text>> input = env.createInput(hadoopInputFormat).name("hdfs");
+        DataSet<Tuple2<LongWritable, Text>> input = env.createInput(hadoopInputFormat).name("Filesystem");
 
         // Use the HadoopMapFunction as wrapper around the Hadoop Mapper (Tokenizer)... and turn it into a
         // MapFunction. Tokenizes the line... and converts from Writable "Text" to String for better handling
@@ -88,15 +90,15 @@ public class WordCountJob extends JobGeneric {
 
         // Build path to output file
         String millis = Long.toString(DateUtils.toCalendar(new Date()).getTimeInMillis());
-        String filename = parameterTool.getRequired("hdfs.wordcount.output");
+        String filename = parameterTool.getRequired("fs.wordcount.output");
 
         FileOutputFormat.setOutputPath(job, new Path(filename));
 
         // Emit data using the Hadoop Output Format
-        hadoopResult.output(hadoopOutputFormat).name("hdfs");
+        hadoopResult.output(hadoopOutputFormat).name("Filesystem");
 
         // Execute
-        env.execute("Hadoop WordCountJob");
+        env.execute("WordCount Job");
     }
 
     /**
