@@ -13,8 +13,8 @@ import java.util.Map;
 
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
-import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.builder.Tuple2Builder;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
@@ -39,12 +39,8 @@ public class DBImportIssnlJob extends JobGeneric {
 
     @Override
     public void execute(final ExecutionEnvironment env) throws Exception {
-        // ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-
-        env.getConfig().setNumberOfExecutionRetries(-1);
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-        env.getConfig().setParallelism(2);
 
         // ConfigConstants.AKKA_FRAMESIZE, 20000000
 
@@ -56,7 +52,7 @@ public class DBImportIssnlJob extends JobGeneric {
         TupleTypeInfo tupleTypeInfo = new TupleTypeInfo(Tuple2.class, BasicTypeInfo.STRING_TYPE_INFO,
             BasicTypeInfo.STRING_TYPE_INFO);
 
-        DataSet<Tuple2<String, String>> output =
+        DataSource<Tuple2<String, String>> output =
             env.createInput(new JDBCSource<Tuple2<Long, String>>().build(parameterTool), tupleTypeInfo);
 
         output.flatMap(new RichFlatMapFunction<Tuple2<String, String>, String>() {
@@ -91,7 +87,7 @@ public class DBImportIssnlJob extends JobGeneric {
             }
         }).withParameters(parameterTool.getConfiguration())
         .writeAsText(
-                parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"))
+            parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"))
             + "/entry-find.txt", WriteMode.OVERWRITE)
             .name("filesystem sink");
 

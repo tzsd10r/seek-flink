@@ -25,7 +25,7 @@ import org.oclc.seek.flink.job.impl.QueryStreamToDbToKafka;
 import org.oclc.seek.flink.job.impl.SocketToConsoleJob;
 import org.oclc.seek.flink.job.impl.SolrEmitterJob;
 import org.oclc.seek.flink.job.impl.WordCountJob;
-import org.oclc.seek.flink.job.impl.WordcountStreamingJob;
+import org.oclc.seek.flink.job.impl.wordcount.WordcountStreamingJob;
 
 /**
  *
