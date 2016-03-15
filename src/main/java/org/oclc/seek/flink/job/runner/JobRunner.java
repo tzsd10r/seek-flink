@@ -21,11 +21,13 @@ import org.oclc.seek.flink.job.impl.KafkaToConsoleJob;
 import org.oclc.seek.flink.job.impl.KafkaToHdfsJob;
 import org.oclc.seek.flink.job.impl.KafkaToKafkaJob;
 import org.oclc.seek.flink.job.impl.KafkaToSolrJob;
-import org.oclc.seek.flink.job.impl.QueryStreamToDbToKafka;
+import org.oclc.seek.flink.job.impl.QueryStreamToDbToKafkaJob;
 import org.oclc.seek.flink.job.impl.SocketToConsoleJob;
 import org.oclc.seek.flink.job.impl.SolrEmitterJob;
 import org.oclc.seek.flink.job.impl.WordCountJob;
 import org.oclc.seek.flink.job.impl.wordcount.WordcountStreamingJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -33,6 +35,7 @@ import org.oclc.seek.flink.job.impl.wordcount.WordcountStreamingJob;
 
 // @SpringBootApplication
 public class JobRunner {
+    private static Logger LOGGER = LoggerFactory.getLogger(JobRunner.class);
     /**
      * @param topologyName
      * @param query
@@ -43,13 +46,13 @@ public class JobRunner {
             StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
             jobContract.execute(env);
         } catch (InstantiationException | IllegalAccessException e) {
-            System.out.println("bad topology requested...");
-            System.out.println(e.getMessage());
+            LOGGER.info("Bad topology requested...");
+            LOGGER.info(e.getMessage());
             usage();
             e.printStackTrace();
         } catch (Exception e) {
-            System.out.println("execution of topology failed...");
-            System.out.println(e.getMessage());
+            LOGGER.info("Execution of topology failed...");
+            LOGGER.info(e.getMessage());
             usage();
             e.printStackTrace();
         }
@@ -104,9 +107,9 @@ public class JobRunner {
         s.append("\n");
         s.append(KafkaToSolrJob.class.getSimpleName().toLowerCase());
         s.append("\n");
-        s.append(QueryStreamToDbToKafka.class.getSimpleName().toLowerCase());
+        s.append(QueryStreamToDbToKafkaJob.class.getSimpleName().toLowerCase());
         s.append("\n");
 
-        System.out.println(s.toString());
+        LOGGER.info(s.toString());
     }
 }

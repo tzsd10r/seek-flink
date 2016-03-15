@@ -8,10 +8,6 @@
 
 package org.oclc.seek.flink.job.impl.wordcount.helper;
 
-import java.util.Arrays;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -56,18 +52,18 @@ public class WordcountTokenizer {
              * Stream array of values and filter out invalid strings... and for each valid string emit pairs
              * containing: (string, 1), in Tuple2 format
              */
-            Arrays.stream(values).filter(new Predicate<String>() {
-                @Override
-                public boolean test(final String value) {
-                    return value.length() > 0;
-                }
-            }).forEach(new Consumer<String>() {
-
-                @Override
-                public void accept(final String value) {
-                    collector.collect(new Tuple2<>(value, 1));
-                }
-            });
+            // Arrays.stream(values).filter(new Predicate<String>() {
+            // @Override
+            // public boolean test(final String value) {
+            // return value.length() > 0;
+            // }
+            // }).forEach(new Consumer<String>() {
+            //
+            // @Override
+            // public void accept(final String value) {
+            // collector.collect(new Tuple2<>(value, 1));
+            // }
+            // });
         }
     }
 

@@ -25,10 +25,6 @@ public class DbInputRecord extends GenericRecord {
     private String[] fields = new String[] {
     };
 
-    // private String[] fields = new String[] {
-    // "owner_institution", "collection_uid"
-    // };
-
     @Override
     public void readFields(final ResultSet rs) throws SQLException {
         entryFind = EntryFindMapper.mapRow(rs);
@@ -38,9 +34,7 @@ public class DbInputRecord extends GenericRecord {
      * @return
      */
     public String toJson() {
-        String s = entryFind.toJson();
-        System.out.println(s);
-        return s;
+        return entryFind.toJson();
     }
 
     /**

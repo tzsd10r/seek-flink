@@ -8,20 +8,11 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.api.common.accumulators.LongCounter;
-import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.shaded.com.google.common.collect.Iterables;
-import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
-import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
-import org.apache.flink.util.Collector;
 import org.apache.hadoop.io.LongWritable;
+import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
@@ -45,86 +36,41 @@ public class DbToHdfsJob extends JobGeneric {
         // set the timeout low to minimize latency
         // env.setBufferTimeout(10);
 
-        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        // JobConf conf = new JobConf();
+        DataStream<Tuple2<LongWritable, DbInputRecord>> dbInputRecords =
+            env.createInput(new JDBCHadoopSource().build(parameterTool))
+            .map(new CountRecords<Tuple2<LongWritable, DbInputRecord>>())
+            .name("db source");
+
+        // DataStream<BaseObject> mapped =
+        // resultSet
+        // .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, BaseObject>() {
+        // private static final long serialVersionUID = 1L;
         //
-        // DBConfiguration.configureDB(conf,
-        // parameterTool.getRequired("db.driver"),
-        // parameterTool.getRequired("db.url"),
-        // parameterTool.getRequired("db.user"),
-        // parameterTool.getRequired("db.password"));
+        // @Override
+        // public BaseObject map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
+        // return tuple.f1.getMapped();
+        // }
+        // }).name("map db records");
         //
-        // DBInputFormat.setInput(conf,
-        // DbInputRecord.class,
-        // parameterTool.getRequired("db.table"),
-        // null,
-        // null,
-        // new String[] {
-        // parameterTool.getRequired("db.fields")
-        // });
+        // DataStream<String> jsonRecords = mapped.keyBy(0)
+        // .countWindow(1)
+        // .apply(new WindowFunction<BaseObject, String, Tuple, GlobalWindow>() {
+        // private static final long serialVersionUID = 1L;
         //
-        // // DBInputFormat.setInput(conf,
-        // // DbInputRecord.class,
-        // // "select * from " + table,
-        // // "select count(*) from" + table
-        // // );
+        // @Override
+        // public void apply(final Tuple key, final GlobalWindow window,
+        // final Iterable<BaseObject> values,
+        // final Collector<String> collector) throws Exception {
         //
-        // HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
-        // new HadoopInputFormat<LongWritable, DbInputRecord>(
-        // new DBInputFormat(), LongWritable.class, DbInputRecord.class, conf);
+        // BaseObject obj = values.iterator().next();
+        // String jsonRecord = obj.toJson();
         //
-        // // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
-        // // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
-        // // conf.setNumTasksToExecutePerJvm(1);
-        //
-        // conf.setNumMapTasks(parameterTool.getInt("map.tasks", 6));
-        // DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
-        // env.createInput(hadoopInputFormat).name("db source");
-
-        DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
-            env.createInput(new JDBCHadoopSource().build(parameterTool)).name("db source");
-
-        // DataStream<String> jsonRecords =
-        DataStream<Tuple3<String, Long, Long>> jsonRecords =
-            rawRecords
-            .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, String>() {
-                private static final long serialVersionUID = 1L;
-                private LongCounter recordCount = new LongCounter();
-
-                @Override
-                public void open(final Configuration parameters) throws Exception {
-                    super.open(parameters);
-                    getRuntimeContext().addAccumulator("recordCount", recordCount);
-                }
-
-                @Override
-                public String map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
-                    recordCount.add(1L);
-                    DbInputRecord dbInputRecord = tuple.f1;
-                    return dbInputRecord.toJson();
-                }
-            })
-            .keyBy(0)
-            .countWindow(10)
-            .apply(new WindowFunction<String, Tuple3<String, Long, Long>, Tuple, GlobalWindow>() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public void apply(final Tuple arg0, final GlobalWindow window,
-                    final Iterable<String> values,
-                    final Collector<Tuple3<String, Long, Long>> collector) throws Exception {
-                    Long elapsedMillis = window.maxTimestamp();
-
-                    collector.collect(new Tuple3<String, Long, Long>("Words: ", elapsedMillis,
-                        new Long(Iterables.size(values))));
-                }
-            });
-
-        // .name("convert db record into json");
+        // collector.collect(jsonRecord);
+        // }
+        // }).name("transform db record into json");
 
         // DataStreamSink<String> filesystem =
         // jsonRecords.addSink(
@@ -140,7 +86,7 @@ public class DbToHdfsJob extends JobGeneric {
      */
     public static void main(final String[] args) throws Exception {
         System.setProperty("environment", "test");
-        System.setProperty("map.tasks", "6");
+        System.setProperty("map.tasks", "10");
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();

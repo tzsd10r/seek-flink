@@ -16,12 +16,11 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.job.impl.wordcount.helper.WordcountTokenizer.WordcountArrayToTupleTokenizer;
 import org.oclc.seek.flink.job.impl.wordcount.helper.WordcountTokenizer.WordcountStringToArrayTokenizer;
-import org.oclc.seek.flink.job.impl.wordcount.helper.WordcountWindow.WordcountTimeWindow;
+import org.oclc.seek.flink.job.impl.wordcount.helper.WordcountWindow.WordcountGlobalWindow;
 
 /**
  *
@@ -52,15 +51,16 @@ public class WordcountStreamingJob extends JobGeneric {
         KeyedStream<Tuple2<String, Integer>, Tuple> keyed = tuplelized.keyBy(0);
 
         // WindowedStream<Tuple2<String, Integer>, Tuple, GlobalWindow> ws = keyed.countWindow(2000000);
-        // WindowedStream<Tuple2<String, Integer>, Tuple, GlobalWindow> ws = keyed.countWindow(1000);
-        // DataStream<Tuple3<String, Integer, Long>> ds = ws.apply(new WordcountGlobalWindow());
+        WindowedStream<Tuple2<String, Integer>, Tuple, GlobalWindow> ws = keyed.countWindow(1);
+        DataStream<Tuple3<String, Integer, Long>> ds = ws.apply(new WordcountGlobalWindow());
 
         // Sum up tuple field "1"
         // DataStream<Tuple2<String, Integer>> ds = windowedStream.sum(1);
 
-        WindowedStream<Tuple2<String, Integer>, Tuple, TimeWindow> ws = keyed.timeWindow(Time.milliseconds(2000));
-        DataStream<Tuple3<String, Integer, Long>> ds = ws.apply(new WordcountTimeWindow())
-            .keyBy(0).countWindow(2000).sum(1);
+        // WindowedStream<Tuple2<String, Integer>, Tuple, TimeWindow> ws =
+        // keyed.timeWindow(Time.milliseconds(2000));
+        // DataStream<Tuple3<String, Integer, Long>> ds = ws.apply(new WordcountTimeWindow())
+        // .keyBy(0).countWindow(2000).sum(1);
 
         ds.writeAsText(parameterTool.getRequired("fs.wordcount.output")).name("Filesystem");
 

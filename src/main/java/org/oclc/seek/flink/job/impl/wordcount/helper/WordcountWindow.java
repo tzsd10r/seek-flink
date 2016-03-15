@@ -33,6 +33,8 @@ public class WordcountWindow {
             final Iterable<Tuple2<String, Integer>> values,
             final Collector<Tuple3<String, Integer, Long>> collector) throws Exception {
 
+            // Long start = window.getStart();
+            // Long end = window.getEnd();
             Long max = window.maxTimestamp();
 
             collector.collect(new Tuple3<>(key.toString(), Iterables.size(values), max));

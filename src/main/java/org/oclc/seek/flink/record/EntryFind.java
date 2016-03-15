@@ -1094,18 +1094,18 @@ public class EntryFind implements BaseObject {
     }
 
     /**
-     * @return an json record
-     */
-    public String toJson() {
-        String s = new Gson().toJson(this);
-        return s;
-    }
-
-    /**
      * @param json
      * @return an json record
      */
     public EntryFind fromJson(final String json) {
         return new Gson().fromJson(json, this.getClass());
+    }
+
+    /**
+     * @return
+     */
+    public String toJson() {
+        String s = new Gson().toJson(this);
+        return s;
     }
 }
