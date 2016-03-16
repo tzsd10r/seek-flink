@@ -104,18 +104,31 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
         /*
          * Stateful
+         * --- ?? min
+         * - Drops into 10 kafka partitions
+         * - 3 hex
+         * - 2 slots
+         * - 10 tm
          */
-        DataStream<EntryFind> records = queries.flatMap(new
-            DatabaseRecordsFetcherItemReader()).name("get db records");
+        // DataStream<EntryFind> records = queries.flatMap(new
+        // DatabaseRecordsFetcherItemReader()).name("get db records");
 
         /*
          * Seems to have better performance.
          * Stateless and reusable... uses less memory requirements
-         * 20 min
-         * Drops into 10 kafka partitions
+         * --- 20 min
+         * - Drops into 10 kafka partitions
+         * - 3 hex
+         * - 2 slots
+         * - 10 tm
+         * ---- ?? min
+         * - Drops into 20 kafka partitions
+         * - 3 hex
+         * - 2 slots
+         * - 10 tm
          */
-        // DataStream<EntryFind> records =
-        // queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
+        DataStream<EntryFind> records =
+            queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
 
         DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
