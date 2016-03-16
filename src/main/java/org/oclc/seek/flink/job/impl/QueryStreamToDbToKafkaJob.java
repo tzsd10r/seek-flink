@@ -10,8 +10,6 @@ package org.oclc.seek.flink.job.impl;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -163,7 +161,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             jdbcTemplate.query(query, new RowCallbackHandler() {
                 @Override
                 public void processRow(final ResultSet rs) throws SQLException {
-                    // collector.collect(rowMapper.mapRow(rs, 1));
+                    collector.collect(rowMapper.mapRow(rs));
                     counter++;
                 }
             });
@@ -213,7 +211,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
                     break;
                 }
                 // list.add(entryFind);
-                // collector.collect(entryFind);
+                collector.collect(entryFind);
                 counter++;
             }
 
