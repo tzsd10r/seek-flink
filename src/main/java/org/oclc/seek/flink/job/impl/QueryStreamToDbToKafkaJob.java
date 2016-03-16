@@ -104,7 +104,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
         /*
          * Stateful
-         * --- ?? min
+         * --- > 20 min
          * - Drops into 10 kafka partitions
          * - 3 hex
          * - 2 slots
@@ -137,7 +137,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             public void flatMap(final EntryFind record, final Collector<String> collector) throws Exception {
                 collector.collect(record.toJson());
             }
-        }).name("transform db records into json");
+        }).rebalance().name("transform db records into json");
 
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
