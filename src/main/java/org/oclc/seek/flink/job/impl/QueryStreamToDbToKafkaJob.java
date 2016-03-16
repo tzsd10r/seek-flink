@@ -235,14 +235,14 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             for (String h : hex) {
                 for (String e : hex) {
                     for (String x : hex) {
-                        // for (String a : hex) {
-                        value = new StringBuilder();
-                        value.append(h);
-                        value.append(e);
-                        value.append(x);
-                        // value.append(a);
-                        ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                        // }
+                        for (String a : hex) {
+                            value = new StringBuilder();
+                            value.append(h);
+                            value.append(e);
+                            value.append(x);
+                            value.append(a);
+                            ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
+                        }
                     }
                 }
             }
