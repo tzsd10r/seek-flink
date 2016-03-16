@@ -111,10 +111,8 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
             @Override
             public void flatMap(final EntryFind record, final Collector<String> collector) throws Exception {
-                // for (EntryFind entryFind : records) {
-                // collector.collect(entryFind.toJson());
-                // }
                 // collector.collect(record.toJson());
+                collector.collect("{hello}");
             }
         }).name("transform db records into json");
 
@@ -202,13 +200,12 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             reader.setSql(query);
             reader.open(new ExecutionContext());
             long counter = 0;
-            // List<EntryFind> list = new ArrayList<EntryFind>();
+
             while (true) {
                 entryFind = reader.read();
                 if (entryFind == null) {
                     break;
                 }
-                // list.add(entryFind);
                 collector.collect(entryFind);
                 counter++;
             }
@@ -216,11 +213,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             reader.close();
 
             recordCount.add(counter);;
-            // return new ArrayList<EntryFind>();
-            // recordCount.add(list.size());
-            // return list;
         }
-
     }
 
     /**
