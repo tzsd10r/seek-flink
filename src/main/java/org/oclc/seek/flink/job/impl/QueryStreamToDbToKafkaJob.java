@@ -102,15 +102,15 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
              */
             .rebalance();
 
-        // DataStream<EntryFind> records = queries.flatMap(new
-        // DatabaseRecordsFetcherItemReader()).name("get db records");
+        DataStream<EntryFind> records = queries.flatMap(new
+            DatabaseRecordsFetcherItemReader()).name("get db records");
 
         /*
          * Seems to have better performance.
          * Stateless and reusable... uses less memory requirements
          */
-        DataStream<EntryFind> records =
-            queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
+        // DataStream<EntryFind> records =
+        // queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
 
         DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
