@@ -8,8 +8,6 @@
 
 package org.oclc.seek.flink.job;
 
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -28,15 +26,15 @@ public abstract class JobGeneric implements JobContract {
 
     @Override
     public void init() {
+        // ClassLoader cl = ClassLoader.getSystemClassLoader();
+        //
+        // URL[] urls = ((URLClassLoader) cl).getURLs();
+        //
+        // for (URL url : urls) {
+        // System.out.println(url.getFile());
+        // }
+
         Properties props = new Properties();
-
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader) cl).getURLs();
-
-        for (URL url : urls) {
-            System.out.println(url.getFile());
-        }
 
         String env = System.getProperty("environment");
         String configFile = "conf/config." + env + ".properties";
