@@ -101,11 +101,10 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
              */
             .rebalance();
 
-        // DataStream<EntryFind> records = queries.flatMap(new
-        // DatabaseRecordsFetcherItemReader()).name("get db records");
+        DataStream<EntryFind> records = queries.flatMap(new DatabaseRecordsFetcherItemReader()).name("get db records");
 
-        DataStream<EntryFind> records =
-            queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
+        // DataStream<EntryFind> records =
+        // queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
 
         DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
@@ -151,7 +150,6 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
             getRuntimeContext().addAccumulator("recordCount", recordCount);
             jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-            // jdbcTemplate.setFetchSize(2000);
             rowMapper = new EntryFindRowMapper();
         }
 
