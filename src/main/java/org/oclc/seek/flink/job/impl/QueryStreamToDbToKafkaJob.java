@@ -103,7 +103,11 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
              */
             .rebalance();
 
-        DataStream<EntryFind> records = queries.flatMap(new DatabaseRecordsFetcher()).name("get db records");
+        // DataStream<EntryFind> records = queries.flatMap(new
+        // DatabaseRecordsFetcherItemReader()).name("get db records");
+
+        DataStream<EntryFind> records =
+            queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
 
         DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
@@ -129,10 +133,50 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
     /**
      *
      */
-    public class DatabaseRecordsFetcher extends RichFlatMapFunction<String, EntryFind> {
+    public class DatabaseRecordsFetcherJdbcTemplate extends RichFlatMapFunction<String, EntryFind> {
         private static final long serialVersionUID = 1L;
         private LongCounter recordCount = new LongCounter();
-        // private transient JdbcTemplate jdbcTemplate;
+        private transient JdbcTemplate jdbcTemplate;
+        private EntryFindRowMapper rowMapper = new EntryFindRowMapper();
+        private long counter;
+
+        @Override
+        public void open(final Configuration configuration) throws Exception {
+            super.open(configuration);
+
+            ParameterTool parameters =
+                (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+
+            String url = parameters.getRequired("db.url");
+            String user = parameters.getRequired("db.user");
+            String password = parameters.getRequired("db.password");
+
+            getRuntimeContext().addAccumulator("recordCount", recordCount);
+            jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
+            // jdbcTemplate.setFetchSize(2000);
+        }
+
+        @Override
+        public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
+            counter = 0;
+            jdbcTemplate.query(query, new RowCallbackHandler() {
+                @Override
+                public void processRow(final ResultSet rs) throws SQLException {
+                    // collector.collect(rowMapper.mapRow(rs, 1));
+                    counter++;
+                }
+            });
+
+            recordCount.add(counter);;
+        }
+    }
+
+    /**
+     *
+     */
+    public class DatabaseRecordsFetcherItemReader extends RichFlatMapFunction<String, EntryFind> {
+        private static final long serialVersionUID = 1L;
+        private LongCounter recordCount = new LongCounter();
         private transient JdbcCursorItemReader<EntryFind> reader;
         private DataSource datasource;
         private EntryFind entryFind;
@@ -150,9 +194,6 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
             getRuntimeContext().addAccumulator("recordCount", recordCount);
             datasource = new DriverManagerDataSource(url, user, password);
-            // jdbcTemplate = new JdbcTemplate(datasource);
-            // jdbcTemplate.setFetchSize(2000);
-            // jdbcTemplate = new StreamingResultSetEnabledJdbcTemplate(datasource);
 
             reader = new JdbcCursorItemReader<EntryFind>();
             reader.setDataSource(datasource);
@@ -160,7 +201,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         }
 
         @Override
-        public void flatMap(final String query, final Collector<EntryFind> arg1) throws Exception {
+        public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
             reader.setSql(query);
             reader.open(new ExecutionContext());
             long counter = 0;
@@ -171,6 +212,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
                     break;
                 }
                 // list.add(entryFind);
+                // collector.collect(entryFind);
                 counter++;
             }
 
@@ -182,40 +224,6 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             // return list;
         }
 
-    }
-
-    /**
-     * @param <T>
-     */
-    public class GenericRowCallbackHandler<T> implements RowCallbackHandler {
-        private List<T> list = new ArrayList<T>();
-        private BaseObjectRowMapper<T> rowMapper;
-
-        /**
-         * @param mapper
-         */
-        public GenericRowCallbackHandler(final BaseObjectRowMapper<T> rowMapper) {
-            this.rowMapper = rowMapper;
-        }
-
-        @Override
-        public void processRow(final ResultSet rs) throws SQLException {
-            list.add(rowMapper.mapRow(rs));
-        }
-
-        /**
-         * @return
-         */
-        public List<T> getList() {
-            return list;
-        }
-
-        /**
-         * @return
-         */
-        public int getSize() {
-            return list.size();
-        }
     }
 
     /**
