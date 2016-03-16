@@ -150,7 +150,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             getRuntimeContext().addAccumulator("recordCount", recordCount);
             datasource = new DriverManagerDataSource(url, user, password);
             jdbcTemplate = new JdbcTemplate(datasource);
-            jdbcTemplate.setFetchSize(2000);
+            // jdbcTemplate.setFetchSize(2000);
             // jdbcTemplate = new StreamingResultSetEnabledJdbcTemplate(datasource);
 
             reader = new JdbcCursorItemReader<EntryFind>();
