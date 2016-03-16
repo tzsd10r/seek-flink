@@ -16,17 +16,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
  */
-public class EntryFindMapper {
-    /**
-     * @param rs
-     * @return
-     * @throws SQLException
-     */
-    public static EntryFind mapRow(final ResultSet rs) throws SQLException {
+public class EntryFindRowMapper implements RowMapper<EntryFind> {
+    @Override
+    public EntryFind mapRow(final ResultSet rs, final int rowNum) throws SQLException {
         EntryFind ef = new EntryFind();
 
         ef.setId(rs.getString("ID"));

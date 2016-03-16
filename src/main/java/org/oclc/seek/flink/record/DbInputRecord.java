@@ -10,6 +10,7 @@ package org.oclc.seek.flink.record;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -21,13 +22,14 @@ public class DbInputRecord extends GenericRecord {
     private String password;
     private String table;
     private EntryFind entryFind;
+    private AtomicInteger count = new AtomicInteger();
 
     private String[] fields = new String[] {
     };
 
     @Override
     public void readFields(final ResultSet rs) throws SQLException {
-        entryFind = EntryFindMapper.mapRow(rs);
+        entryFind = new EntryFindRowMapper().mapRow(rs, count.incrementAndGet());
     }
 
     /**

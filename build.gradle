@@ -81,6 +81,9 @@ dependencies {
     compile("org.springframework:spring-jdbc:4.2.0.RELEASE")
     compile("org.springframework:spring-core:4.2.0.RELEASE")
     compile 'org.springframework:spring-context:4.2.0.RELEASE'
+    compile 'org.springframework.batch:spring-batch-core:2.2.7.RELEASE'
+    compile 'org.springframework.batch:spring-batch-infrastructure:2.2.7.RELEASE'
+    
     // compile( group:'org.springframework.boot', name: 'spring-boot-starter' )
     // compile 'org.springframework:spring-beans:4.2.0.RELEASE'
     // compile( group:'com.fasterxml.jackson.core', name: 'jackson-databind' )

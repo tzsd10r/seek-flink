@@ -8,11 +8,18 @@
 
 package org.oclc.seek.flink.job.impl;
 
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import javax.sql.DataSource;
+
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 
 /**
  * Here, you can start creating your execution plan for Flink.
@@ -96,12 +103,16 @@ public class QueryStreamJob extends JobGeneric {
 
         @Override
         public void run(final SourceContext<String> ctx) throws Exception {
-            for (String s : hex) {
-                for (String h : hex) {
-                    String value = s + h;
-                    String query = "SELECT * FROM entry_find WHERE ID LIKE '" + value + "%'";
-                    System.out.println(query);
-                    ctx.collect(query);
+            for (String h : hex) {
+                for (String e : hex) {
+                    for (String x : hex) {
+                        for (String a : hex) {
+                            String value = h + e + x + a;
+                            String query = "SELECT COUNT(*) FROM entry_find WHERE id LIKE '" + value + "%'";
+                            System.out.println(query);
+                            ctx.collect(query);
+                        }
+                    }
                 }
             }
         }
@@ -109,6 +120,48 @@ public class QueryStreamJob extends JobGeneric {
         @Override
         public void cancel() {
             running = false;
+        }
+    }
+
+    /**
+     * A {@link JdbcTemplate} which will make it possible to mimic streaming Resultset's by allowing negative fetch
+     * sizes
+     * to be set on the {@link Statement}.
+     *
+     * @author reik.schatz
+     */
+    public class StreamingResultSetEnabledJdbcTemplate extends JdbcTemplate {
+        public StreamingResultSetEnabledJdbcTemplate(final DataSource dataSource) {
+            super(dataSource);
+        }
+
+        public StreamingResultSetEnabledJdbcTemplate(final DataSource dataSource, final boolean lazyInit) {
+            super(dataSource, lazyInit);
+        }
+
+        /**
+         * Prepare the given JDBC Statement (or PreparedStatement or CallableStatement),
+         * applying statement settings such as fetch size, max rows, and query timeout.
+         * Unlike in {@link JdbcTemplate} you can also specify a negative fetch size.
+         *
+         * @param stmt the JDBC Statement to prepare
+         * @throws java.sql.SQLException if thrown by JDBC API
+         * @see #setFetchSize
+         * @see #setMaxRows
+         * @see #setQueryTimeout
+         * @see org.springframework.jdbc.datasource.DataSourceUtils#applyTransactionTimeout
+         */
+        @Override
+        protected void applyStatementSettings(final Statement stmt) throws SQLException {
+            int fetchSize = getFetchSize();
+            stmt.setFetchSize(fetchSize);
+
+            int maxRows = getMaxRows();
+            if (maxRows > 0) {
+                stmt.setMaxRows(maxRows);
+            }
+
+            DataSourceUtils.applyTimeout(stmt, getDataSource(), getQueryTimeout());
         }
     }
 
@@ -126,5 +179,53 @@ public class QueryStreamJob extends JobGeneric {
         job.init();
         job.execute(env);
     }
+
+    // System.out.println(query);
+    // GenericRowCallbackHandler<EntryFind> handler =
+    // new GenericRowCallbackHandler<EntryFind>(new EntryFindRowMapper());
+    // jdbcTemplate.query(query, handler);
+    // recordCount.add(handler.getSize());
+    // return handler.getList();
+
+    // List<EntryFind> records =
+    // jdbcTemplate.query(query, new RowMapper<EntryFind>() {
+    // @Override
+    // public EntryFind mapRow(final ResultSet rs, final int i) throws SQLException {
+    // return new EntryFindRowMapper().mapRow(rs);
+    // }
+    // });
+    //
+    // recordCount.add(records.size());
+    // return records;
+
+    // PreparedStatementCallback<List<EntryFind>> callback = new
+    // PreparedStatementCallback<List<EntryFind>>() {
+    // @Override
+    // public List<EntryFind> doInPreparedStatement(final PreparedStatement pstmt) throws SQLException,
+    // DataAccessException {
+    // List<EntryFind> list = new ArrayList<EntryFind>();
+    //
+    // ResultSet rs = pstmt.executeQuery();
+    // while (rs.next()) {
+    // list.add(EntryFindRowMapper.mapRow(rs));
+    // }
+    // rs.close();
+    // return list;
+    // }
+    // };
+    //
+    // PreparedStatementCreator creator = new PreparedStatementCreator() {
+    // @Override
+    // public PreparedStatement createPreparedStatement(final Connection conn) throws SQLException {
+    // PreparedStatement pstmt =
+    // conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+    // pstmt.setFetchSize(Integer.MIN_VALUE);
+    // return pstmt;
+    // }
+    // };
+    //
+    // List<EntryFind> records = jdbcTemplate.execute(creator, callback);
+    // recordCount.add(records.size());
+    // return records;
 
 }
