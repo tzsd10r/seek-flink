@@ -115,7 +115,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
                 // for (EntryFind entryFind : records) {
                 // collector.collect(entryFind.toJson());
                 // }
-                collector.collect(record.toJson());
+                // collector.collect(record.toJson());
             }
         }).name("transform db records into json");
 
