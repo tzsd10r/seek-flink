@@ -17,7 +17,7 @@ import javax.sql.DataSource;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -103,16 +103,17 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
              */
             .rebalance();
 
-        DataStream<List<EntryFind>> records = queries.map(new DatabaseRecordsFetcher()).name("get db records");
+        DataStream<EntryFind> records = queries.flatMap(new DatabaseRecordsFetcher()).name("get db records");
 
-        DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<List<EntryFind>, String>() {
+        DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public void flatMap(final List<EntryFind> records, final Collector<String> collector) throws Exception {
-                for (EntryFind entryFind : records) {
-                    collector.collect(entryFind.toJson());
-                }
+            public void flatMap(final EntryFind record, final Collector<String> collector) throws Exception {
+                // for (EntryFind entryFind : records) {
+                // collector.collect(entryFind.toJson());
+                // }
+                collector.collect(record.toJson());
             }
         }).name("transform db records into json");
 
@@ -128,10 +129,10 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
     /**
      *
      */
-    public class DatabaseRecordsFetcher extends RichMapFunction<String, List<EntryFind>> {
+    public class DatabaseRecordsFetcher extends RichFlatMapFunction<String, EntryFind> {
         private static final long serialVersionUID = 1L;
         private LongCounter recordCount = new LongCounter();
-        private transient JdbcTemplate jdbcTemplate;
+        // private transient JdbcTemplate jdbcTemplate;
         private transient JdbcCursorItemReader<EntryFind> reader;
         private DataSource datasource;
         private EntryFind entryFind;
@@ -149,7 +150,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
             getRuntimeContext().addAccumulator("recordCount", recordCount);
             datasource = new DriverManagerDataSource(url, user, password);
-            jdbcTemplate = new JdbcTemplate(datasource);
+            // jdbcTemplate = new JdbcTemplate(datasource);
             // jdbcTemplate.setFetchSize(2000);
             // jdbcTemplate = new StreamingResultSetEnabledJdbcTemplate(datasource);
 
@@ -159,26 +160,26 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         }
 
         @Override
-        public List<EntryFind> map(final String query) throws Exception {
+        public void flatMap(final String query, final Collector<EntryFind> arg1) throws Exception {
             reader.setSql(query);
             reader.open(new ExecutionContext());
-            // long counter = 0;
-            List<EntryFind> list = new ArrayList<EntryFind>();
+            long counter = 0;
+            // List<EntryFind> list = new ArrayList<EntryFind>();
             while (true) {
                 entryFind = reader.read();
                 if (entryFind == null) {
                     break;
                 }
-                list.add(entryFind);
-                // counter++;
+                // list.add(entryFind);
+                counter++;
             }
 
             reader.close();
 
-            // recordCount.add(counter);;
+            recordCount.add(counter);;
             // return new ArrayList<EntryFind>();
-            recordCount.add(list.size());
-            return list;
+            // recordCount.add(list.size());
+            // return list;
         }
 
     }
