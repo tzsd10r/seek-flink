@@ -8,13 +8,12 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
+import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
@@ -45,35 +44,37 @@ public class DbToKafkaJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        final String table = parameterTool.getRequired("db.table");
+        final String suffix = parameterTool.getRequired("db.table");
 
         DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
-            env.createInput(new JDBCHadoopSource().build(parameterTool)).name("db source");
+            env.createInput(new JDBCHadoopSource().build(parameterTool))
+            .map(new CountRecords<Tuple2<LongWritable, DbInputRecord>>())
+            .name("db source");
 
         DataStream<String> jsonRecords =
             rawRecords
             .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, String>() {
                 private static final long serialVersionUID = 1L;
-                private LongCounter recordCount = new LongCounter();
 
-                @Override
-                public void open(final Configuration parameters) throws Exception {
-                    super.open(parameters);
-                    getRuntimeContext().addAccumulator("recordCount", recordCount);
-                }
+                // private LongCounter recordCount = new LongCounter();
+
+                // @Override
+                // public void open(final Configuration parameters) throws Exception {
+                // super.open(parameters);
+                // getRuntimeContext().addAccumulator("recordCount", recordCount);
+                // }
 
                 @Override
                 public String map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
-                    recordCount.add(1L);
-                    DbInputRecord dbInputRecord = tuple.f1;
-                    return dbInputRecord.toJson();
+                    // recordCount.add(1L);
+                    return tuple.f1.toJson();
                 }
             }).name("convert db record into json");
 
         // DataStreamSink<String> kafka =
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
-                parameterTool.get("kafka.sink.topic." + table),
+                parameterTool.get("kafka.sink.topic." + suffix),
                 parameterTool.getProperties()))
                 .name("put json records on Kafka");
 

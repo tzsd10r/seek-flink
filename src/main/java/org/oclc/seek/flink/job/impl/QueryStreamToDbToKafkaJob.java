@@ -102,12 +102,17 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
              */
             .rebalance();
 
+        /*
+         * Stateful
+         */
         DataStream<EntryFind> records = queries.flatMap(new
             DatabaseRecordsFetcherItemReader()).name("get db records");
 
         /*
          * Seems to have better performance.
          * Stateless and reusable... uses less memory requirements
+         * 20 min
+         * Drops into 10 kafka partitions
          */
         // DataStream<EntryFind> records =
         // queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
