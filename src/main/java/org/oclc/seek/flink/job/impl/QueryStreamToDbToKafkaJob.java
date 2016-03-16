@@ -115,8 +115,8 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
 
             @Override
             public void flatMap(final EntryFind record, final Collector<String> collector) throws Exception {
-                // collector.collect(record.toJson());
-                collector.collect("{hello}");
+                collector.collect(record.toJson());
+                // collector.collect("{hello}");
             }
         }).name("transform db records into json");
 
