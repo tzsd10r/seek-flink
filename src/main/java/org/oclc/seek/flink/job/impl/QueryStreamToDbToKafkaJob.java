@@ -162,22 +162,23 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         public List<EntryFind> map(final String query) throws Exception {
             reader.setSql(query);
             reader.open(new ExecutionContext());
-            long counter = 0;
-            // List<EntryFind> list = new ArrayList<EntryFind>();
+            // long counter = 0;
+            List<EntryFind> list = new ArrayList<EntryFind>();
             while (true) {
                 entryFind = reader.read();
                 if (entryFind == null) {
                     break;
                 }
-                // list.add(entryFind);
-                counter++;
+                list.add(entryFind);
+                // counter++;
             }
 
             reader.close();
-            recordCount.add(counter);;
-            return new ArrayList<EntryFind>();
-            // recordCount.add(list.size());
-            // return list;
+
+            // recordCount.add(counter);;
+            // return new ArrayList<EntryFind>();
+            recordCount.add(list.size());
+            return list;
         }
 
     }
