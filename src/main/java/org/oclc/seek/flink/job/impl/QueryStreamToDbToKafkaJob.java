@@ -27,6 +27,7 @@ import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.BaseObjectRowMapper;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.record.EntryFindRowMapper;
+import org.oclc.seek.flink.sink.KafkaSinkBuilder;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -101,14 +102,14 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
              */
             .rebalance();
 
-        DataStream<EntryFind> records = queries.flatMap(new
-            DatabaseRecordsFetcherItemReader()).name("get db records");
+        // DataStream<EntryFind> records = queries.flatMap(new
+        // DatabaseRecordsFetcherItemReader()).name("get db records");
 
         /*
          * Seems to have better performance
          */
-        // DataStream<EntryFind> records =
-        // queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
+        DataStream<EntryFind> records =
+            queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
 
         DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
@@ -119,11 +120,11 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             }
         }).name("transform db records into json");
 
-        // jsonRecords.addSink(
-        // new KafkaSinkBuilder().build(
-        // parameterTool.get("kafka.sink.topic." + prefix),
-        // parameterTool.getProperties()))
-        // .name("kafka");
+        jsonRecords.addSink(
+            new KafkaSinkBuilder().build(
+                parameterTool.get("kafka.sink.topic." + prefix),
+                parameterTool.getProperties()))
+                .name("kafka");
 
         env.execute("Receives SQL queries... executes them and then writes to Kafka stage");
     }
