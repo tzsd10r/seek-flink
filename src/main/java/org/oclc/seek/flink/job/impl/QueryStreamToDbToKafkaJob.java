@@ -137,7 +137,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             public void flatMap(final EntryFind record, final Collector<String> collector) throws Exception {
                 collector.collect(record.toJson());
             }
-        }).rebalance().name("transform db records into json");
+        }).name("transform db records into json");
 
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
