@@ -137,7 +137,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         private static final long serialVersionUID = 1L;
         private LongCounter recordCount = new LongCounter();
         private transient JdbcTemplate jdbcTemplate;
-        private EntryFindRowMapper rowMapper = new EntryFindRowMapper();
+        private BaseObjectRowMapper<EntryFind> rowMapper;
         private long counter;
 
         @Override
@@ -154,6 +154,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             getRuntimeContext().addAccumulator("recordCount", recordCount);
             jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
             // jdbcTemplate.setFetchSize(2000);
+            rowMapper = new EntryFindRowMapper();
         }
 
         @Override

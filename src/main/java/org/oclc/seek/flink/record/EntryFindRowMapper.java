@@ -21,9 +21,14 @@ import org.springframework.jdbc.core.RowMapper;
 /**
  *
  */
-public class EntryFindRowMapper implements RowMapper<EntryFind> {
+public class EntryFindRowMapper implements BaseObjectRowMapper<EntryFind>, RowMapper<EntryFind> {
     @Override
     public EntryFind mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+        return mapRow(rs);
+    }
+
+    @Override
+    public EntryFind mapRow(final ResultSet rs) throws SQLException {
         EntryFind ef = new EntryFind();
 
         ef.setId(rs.getString("ID"));
