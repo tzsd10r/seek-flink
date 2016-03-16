@@ -13,8 +13,16 @@ package org.oclc.seek.flink.record;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * @param <T>
+ */
 public interface BaseObjectRowMapper<T> {
 
+    /**
+     * @param rs
+     * @return an instance of type T
+     * @throws SQLException
+     */
     public T mapRow(final ResultSet rs) throws SQLException;
 
 }

@@ -75,7 +75,8 @@ repositories {
 
 dependencies {
     // groovy
-    compile 'org.codehaus.groovy:groovy-all:2.4.3'
+    //compile 'org.codehaus.groovy:groovy-all:2.4.3'
+    compile 'org.codehaus.groovy:groovy-all:2.4.6'
 
     // Spring
     compile("org.springframework:spring-jdbc:4.2.0.RELEASE")

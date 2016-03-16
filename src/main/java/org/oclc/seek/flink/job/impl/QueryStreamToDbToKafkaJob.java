@@ -104,6 +104,9 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         // DataStream<EntryFind> records = queries.flatMap(new
         // DatabaseRecordsFetcherItemReader()).name("get db records");
 
+        /*
+         * Seems to have better performance
+         */
         DataStream<EntryFind> records =
             queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
 
