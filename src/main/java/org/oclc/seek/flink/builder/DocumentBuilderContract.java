@@ -24,4 +24,6 @@ public interface DocumentBuilderContract<R> extends Serializable {
      * @return an instance of R
      */
     public R build(final BaseObject input, final Class<R> clazz);
+
+    public Object build(final String input, final Class<R> clazz);
 }

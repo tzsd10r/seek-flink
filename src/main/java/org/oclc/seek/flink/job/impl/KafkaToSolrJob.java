@@ -44,7 +44,7 @@ public class KafkaToSolrJob extends JobGeneric {
         // create a checkpoint every 5 seconds
         // env.enableCheckpointing(5000);
 
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+        // env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
@@ -84,10 +84,10 @@ public class KafkaToSolrJob extends JobGeneric {
                     recordCount.add(1L);
                     return builder.build(entryFind, KbwcEntryDocument.class);
                 }
-            });// .name("convert json into documents and count the records");
+            }).name("convert json into documents and count the records");
 
-        docs.addSink(new SolrSinkBuilder<KbwcEntryDocument>().build(configMap));
-        // .name("Index to solr sink");;
+        docs.addSink(new SolrSinkBuilder<KbwcEntryDocument>().build(configMap))
+        .name("Index to solr sink");
 
         env.execute("Reads from Kafka and indexes to Solr");
     }

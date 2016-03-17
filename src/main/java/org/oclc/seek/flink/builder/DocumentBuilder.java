@@ -8,6 +8,9 @@
 
 package org.oclc.seek.flink.builder;
 
+import groovy.json.JsonParserType;
+import groovy.json.JsonSlurper;
+
 import org.oclc.seek.flink.record.BaseObject;
 
 import com.google.gson.Gson;
@@ -32,6 +35,19 @@ public class DocumentBuilder<R> implements DocumentBuilderContract<R> {
         String json = g.toJson(input);
 
         return g.fromJson(json, clazz);
+    }
+
+    /**
+     * @param input
+     * @return an instance of type R
+     */
+    @Override
+    public Object build(final String json, final Class<R> clazz) {
+        if (json == null) {
+            return null;
+        }
+
+        return new JsonSlurper().setType(JsonParserType.INDEX_OVERLAY).parseText(json);
     }
 
     // @SuppressWarnings("unchecked")

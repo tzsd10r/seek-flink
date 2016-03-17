@@ -8,31 +8,16 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
-import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.function.CountRecords;
+import org.oclc.seek.flink.function.DBFetcherCallBack;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.record.BaseObjectRowMapper;
 import org.oclc.seek.flink.record.EntryFind;
-import org.oclc.seek.flink.record.EntryFindRowMapper;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
-import org.springframework.batch.item.ExecutionContext;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import scala.collection.mutable.StringBuilder;
 
@@ -85,50 +70,43 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         final String prefix = parameterTool.getRequired("db.table");
-        // // final String driver = parameterTool.getRequired("db.driver");
-        // final String url = parameterTool.getRequired("db.url");
-        // final String user = parameterTool.getRequired("db.user");
-        // final String password = parameterTool.getRequired("db.password");
 
         /*
          * Query Generator stream
          */
         DataStream<String> queries = env
             .addSource(new QueryGeneratorStream())
-            .map(new CountRecords<String>())
-            .name("generator of queries")
+            .name("generator of queries");
+
+        // DataStream<EntryFind> records = queries.flatMap(new
+        // DBFetcherResultSetExtractor()).name("get db records using resultset extractor");
+
+        DataStream<EntryFind> records = queries.flatMap(new
+            DBFetcherCallBack())
             /*
              * Enforces the even distribution over all parallel instances of the following task
              */
-            .rebalance();
+            .rebalance()
+            .name("get db records using callback");
 
         /*
-         * Stateful
-         * --- > 20 min
-         * - Drops into 10 kafka partitions
-         * - 3 hex
-         * - 2 slots
-         * - 10 tm
+         * Don't use... terrible performance
          */
         // DataStream<EntryFind> records = queries.flatMap(new
-        // DatabaseRecordsFetcherItemReader()).name("get db records");
+        // DBFetcherItemReader()).name("get db records using item reader");
 
         /*
          * Seems to have better performance.
-         * Stateless and reusable... uses less memory requirements
-         * --- 20 min
-         * - Drops into 10 kafka partitions
-         * - 3 hex
-         * - 2 slots
-         * - 10 tm
-         * ---- ?? min
-         * - Drops into 20 kafka partitions
-         * - 3 hex
-         * - 2 slots
-         * - 10 tm
+         * Stateless and reusable...
+         * --- using 'hex'
+         * - 20 min
+         * - 10 kafka partitions
+         * - 16 workers
+         * --- using 'he'
+         * - very slow
          */
-        DataStream<EntryFind> records =
-            queries.flatMap(new DatabaseRecordsFetcherJdbcTemplate()).name("get db records");
+        // DataStream<EntryFind> records =
+        // queries.flatMap(new DBFetcherRowMapper()).name("get db records using row mapper");
 
         DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
             private static final long serialVersionUID = 1L;
@@ -139,104 +117,13 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             }
         }).name("transform db records into json");
 
-        jsonRecords.addSink(
-            new KafkaSinkBuilder().build(
-                parameterTool.get("kafka.sink.topic." + prefix),
-                parameterTool.getProperties()))
-                .name("kafka");
+        // jsonRecords.addSink(
+        // new KafkaSinkBuilder().build(
+        // parameterTool.get("kafka.sink.topic." + prefix),
+        // parameterTool.getProperties()))
+        // .name("kafka");
 
-        env.execute("Receives SQL queries... executes them and then writes to Kafka stage");
-    }
-
-    /**
-     *
-     */
-    public class DatabaseRecordsFetcherJdbcTemplate extends RichFlatMapFunction<String, EntryFind> {
-        private static final long serialVersionUID = 1L;
-        private LongCounter recordCount = new LongCounter();
-        private transient JdbcTemplate jdbcTemplate;
-        private BaseObjectRowMapper<EntryFind> rowMapper;
-        private long counter;
-
-        @Override
-        public void open(final Configuration configuration) throws Exception {
-            super.open(configuration);
-
-            ParameterTool parameters =
-                (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-
-            String url = parameters.getRequired("db.url");
-            String user = parameters.getRequired("db.user");
-            String password = parameters.getRequired("db.password");
-
-            getRuntimeContext().addAccumulator("recordCount", recordCount);
-            jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-            rowMapper = new EntryFindRowMapper();
-        }
-
-        @Override
-        public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
-            counter = 0;
-            jdbcTemplate.query(query, new RowCallbackHandler() {
-                @Override
-                public void processRow(final ResultSet rs) throws SQLException {
-                    collector.collect(rowMapper.mapRow(rs));
-                    counter++;
-                }
-            });
-
-            recordCount.add(counter);;
-        }
-    }
-
-    /**
-     *
-     */
-    public class DatabaseRecordsFetcherItemReader extends RichFlatMapFunction<String, EntryFind> {
-        private static final long serialVersionUID = 1L;
-        private LongCounter recordCount = new LongCounter();
-        private transient JdbcCursorItemReader<EntryFind> reader;
-        private DataSource datasource;
-        private EntryFind entryFind;
-
-        @Override
-        public void open(final Configuration configuration) throws Exception {
-            super.open(configuration);
-
-            ParameterTool parameters =
-                (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-
-            String url = parameters.getRequired("db.url");
-            String user = parameters.getRequired("db.user");
-            String password = parameters.getRequired("db.password");
-
-            getRuntimeContext().addAccumulator("recordCount", recordCount);
-            datasource = new DriverManagerDataSource(url, user, password);
-
-            reader = new JdbcCursorItemReader<EntryFind>();
-            reader.setDataSource(datasource);
-            reader.setRowMapper(new EntryFindRowMapper());
-        }
-
-        @Override
-        public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
-            reader.setSql(query);
-            reader.open(new ExecutionContext());
-            long counter = 0;
-
-            while (true) {
-                entryFind = reader.read();
-                if (entryFind == null) {
-                    break;
-                }
-                collector.collect(entryFind);
-                counter++;
-            }
-
-            reader.close();
-
-            recordCount.add(counter);;
-        }
+        env.execute("Receives SQL queries... executes them and then writes to Kafka");
     }
 
     /**
@@ -256,17 +143,19 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             StringBuilder value;
             for (String h : hex) {
                 for (String e : hex) {
-                    for (String x : hex) {
-                        // for (String a : hex) {
-                        value = new StringBuilder();
-                        value.append(h);
-                        value.append(e);
-                        value.append(x);
-                        // value.append(a);
-                        ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                        // }
-                    }
+                    // for (String x : hex) {
+                    // for (String a : hex) {
+                    value = new StringBuilder();
+                    value.append(h);
+                    value.append(e);
+                    // value.append(x);
+                    // value.append(a);
+                    ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
+                    System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
+                    Thread.sleep(100);
                 }
+                // }
+                // }
             }
         }
 
@@ -281,13 +170,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        String configFile;
-        if (args.length == 0) {
-            configFile = "conf/conf.prod.properties";
-            System.out.println("Missing input : conf file location, using default: " + configFile);
-        } else {
-            configFile = args[0];
-        }
+        System.setProperty("environment", "test");
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         QueryStreamToDbToKafkaJob job = new QueryStreamToDbToKafkaJob();
