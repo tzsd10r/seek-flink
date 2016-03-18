@@ -60,8 +60,8 @@ public class HdfsToKafkaJob extends JobGeneric {
 
         String topic = parameterTool.get("kafka.sink.topic." + suffix);
 
-        jsonRecords.addSink(new KafkaSinkBuilder().build(topic, parameterTool.getProperties()))
-        .name("kafka-stage");
+        // jsonRecords.addSink(new KafkaSinkBuilder().build(topic, parameterTool.getProperties()))
+        // .name("kafka-stage");
 
         env.execute("Reads from HDFS and writes to Kafka");
     }
