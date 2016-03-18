@@ -31,22 +31,28 @@ public class JsonTextParser<IN> extends RichMapFunction<IN, String> {
      */
     private Gson gson;
 
+
     @Override
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
+
+        String msg = "Using Groovy JsonOutput!!!";
         ParameterTool parameterTool =
             (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
 
+
         if (parameterTool.getRequired("json.text.parser").equals("gson")) {
             gson = new Gson();
+            msg = "Using Gson!!!";
         }
-    }
 
+        System.out.println(msg);
+    }
 
     @Override
     public String map(final IN object) throws Exception {
         if (gson != null) {
-            return new Gson().toJson(object);
+            return gson.toJson(object);
         }
 
         return JsonOutput.toJson(object);

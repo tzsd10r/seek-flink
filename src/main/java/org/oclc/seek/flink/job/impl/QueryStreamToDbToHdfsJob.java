@@ -59,35 +59,18 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
 
         final String suffix = parameterTool.getRequired("db.table");
 
-        /*
-         * Query Generator stream
-         */
         DataStream<String> queries = env.addSource(new QueryGeneratorSource())
             .name(QueryGeneratorSource.DESCRIPTION);
+
+        // DataStream<EntryFind> records =
+        // queries.flatMap(new DBFetcherRowMapper()).name("get db records using row mapper");
 
         // DataStream<EntryFind> records = queries.flatMap(new
         // DBFetcherResultSetExtractor()).name("get db records using resultset extractor");
 
-        DataStream<EntryFind> records = queries.flatMap(new
-            DBFetcherCallBack())
-            /*
-             * Enforces the even distribution over all parallel instances of the following task
-             */
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
             .rebalance()
-            .name("get db records using callback");
-
-        /*
-         * Seems to have better performance.
-         * Stateless and reusable...
-         * --- using 'hex'
-         * - 20 min
-         * - 10 kafka partitions
-         * - 16 workers
-         * --- using 'he'
-         * - very slow
-         */
-        // DataStream<EntryFind> records =
-        // queries.flatMap(new DBFetcherRowMapper()).name("get db records using row mapper");
+            .name(DBFetcherCallBack.DESCRIPTION);
 
         DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
             .name(JsonTextParser.DESCRIPTION);

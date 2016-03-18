@@ -54,9 +54,13 @@ public abstract class JobGeneric implements JobContract {
             throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
         }
 
-        String defaultJsonParser = "gson";
-        props.put("json.text.parser",
-            System.getProperty("json.text.parser") == null ? defaultJsonParser : System.getProperty("json.parser"));
+        String jsonParser = System.getProperty("json.text.parser");
+
+        if (StringUtils.isBlank(jsonParser) || !jsonParser.equals("gson") && !jsonParser.equals("groovy")) {
+            throw new RuntimeException("Must specify a parser... 'groovy' or 'gson'");
+        }
+
+        props.put("json.text.parser", jsonParser);
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }
