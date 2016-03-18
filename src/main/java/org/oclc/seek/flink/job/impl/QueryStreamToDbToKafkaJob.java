@@ -13,7 +13,6 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.function.DBFetcherCallBack;
 import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.job.impl.QueryStreamToDbToSolrJob.QueryGeneratorStream;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.QueryGeneratorSource;
@@ -63,10 +62,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        /*
-         * Query Generator stream
-         */
-        DataStream<String> queries = env.addSource(new QueryGeneratorStream())
+        DataStream<String> queries = env.addSource(new QueryGeneratorSource())
             .name(QueryGeneratorSource.DESCRIPTION);
 
         /*
@@ -76,19 +72,6 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
             .rebalance()
             .name(DBFetcherCallBack.DESCRIPTION);
-
-        /*
-         * Seems to have better performance.
-         * Stateless and reusable...
-         * --- using 'hex'
-         * - 20 min
-         * - 10 kafka partitions
-         * - 16 workers
-         * --- using 'he'
-         * - very slow
-         */
-        // DataStream<EntryFind> records =
-        // queries.flatMap(new DBFetcherRowMapper()).name("get db records using row mapper");
 
         DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
             .name(JsonTextParser.DESCRIPTION);
@@ -112,5 +95,4 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         job.init();
         job.execute(env);
     }
-
 }

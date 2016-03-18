@@ -99,6 +99,7 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                     conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 conn.setAutoCommit(false);
                 ps.setFetchSize(FETCH_SIZE);
+                ps.setQueryTimeout(600);
                 return ps;
             }
         };

@@ -39,22 +39,22 @@ public class DocumentParser extends RichMapFunction<String, KbwcEntryDocument> {
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
 
-        String msg = "Using Groovy JsonSlurper!!!";
+        // String msg = "Using Groovy JsonSlurper!!!";
         ParameterTool parameterTool =
             (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
 
         if (parameterTool.getRequired("json.text.parser").equals("gson")) {
             gson = new Gson();
-            msg = "Using Gson!!!";
+            // msg = "Using Gson!!!";
         }
 
-        System.out.println(msg);
+        // System.out.println(msg);
     }
 
     @Override
     public KbwcEntryDocument map(final String json) throws Exception {
         if (gson != null) {
-            gson.fromJson(json, KbwcEntryDocument.class);
+            return gson.fromJson(json, KbwcEntryDocument.class);
         }
 
         return (KbwcEntryDocument) new JsonSlurper().setType(JsonParserType.INDEX_OVERLAY).parseText(json);

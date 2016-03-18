@@ -57,17 +57,13 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        final String suffix = parameterTool.getRequired("db.table");
-
         DataStream<String> queries = env.addSource(new QueryGeneratorSource())
             .name(QueryGeneratorSource.DESCRIPTION);
 
-        // DataStream<EntryFind> records =
-        // queries.flatMap(new DBFetcherRowMapper()).name("get db records using row mapper");
-
-        // DataStream<EntryFind> records = queries.flatMap(new
-        // DBFetcherResultSetExtractor()).name("get db records using resultset extractor");
-
+        /*
+         * The rebalance() method enforces the even distribution over all parallel instances for the task that will
+         * be executing on the DataStream produced here
+         */
         DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
             .rebalance()
             .name(DBFetcherCallBack.DESCRIPTION);
@@ -75,6 +71,7 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
             .name(JsonTextParser.DESCRIPTION);
 
+        String suffix = parameterTool.getRequired("db.table");
         jsonRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
         .name(HdfsSink.DESCRIPTION);
 
@@ -93,5 +90,4 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         job.init();
         job.execute(env);
     }
-
 }

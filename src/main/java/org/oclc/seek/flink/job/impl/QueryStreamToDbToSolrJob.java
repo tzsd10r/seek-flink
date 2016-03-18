@@ -13,7 +13,6 @@ import java.util.Map;
 import org.apache.flink.shaded.com.google.common.collect.ImmutableMap;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.document.KbwcEntryDocument;
 import org.oclc.seek.flink.function.DBFetcherCallBack;
 import org.oclc.seek.flink.function.DocumentParser;
@@ -21,8 +20,7 @@ import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.sink.SolrSink;
-
-import scala.collection.mutable.StringBuilder;
+import org.oclc.seek.flink.source.QueryGeneratorSource;
 
 /**
  * Here, you can start creating your execution plan for Flink.
@@ -68,67 +66,23 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         Map<String, String> configMap = ImmutableMap
             .of(SolrSink.ZKHOSTS, zkHosts, SolrSink.COLLECTION, collection);
 
-        /*
-         * Query Generator stream
-         */
-        DataStream<String> queries = env.addSource(new QueryGeneratorStream())
-            .name("generator of queries");
+        DataStream<String> queries = env.addSource(new QueryGeneratorSource())
+            .name(QueryGeneratorSource.DESCRIPTION);
 
-        /*
-         * Enforces the even distribution over all parallel instances of the following task
-         */
         DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
             .rebalance()
-            .name("get db records using callback");
+            .name(DBFetcherCallBack.DESCRIPTION);
 
         DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
-            .name("transform db records into json");
+            .name(JsonTextParser.DESCRIPTION);
 
         DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
-            .name("create documents for solr");
+            .name(DocumentParser.DESCRIPTION);
 
-        // documents.addSink(new SolrSinkBuilder<KbwcEntryDocument>().build(configMap))
         documents.addSink(new SolrSink<KbwcEntryDocument>(configMap))
-        .name("Index to solr sink");;
+        .name(SolrSink.DESCRIPTION);;
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
-    }
-
-    /**
-     *
-     */
-    public static class QueryGeneratorStream implements SourceFunction<String> {
-        private static final long serialVersionUID = 1L;
-        boolean running = true;
-        long i = 1;
-
-        static final String[] hex = {
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"
-        };
-
-        @Override
-        public void run(final SourceContext<String> ctx) throws Exception {
-            StringBuilder value;
-            for (String h : hex) {
-                for (String e : hex) {
-                    // for (String x : hex) {
-                    // for (String a : hex) {
-                    value = new StringBuilder();
-                    value.append(h);
-                    value.append(e);
-                    // value.append(x);
-                    // value.append(a);
-                    ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                    // }
-                    // }
-                }
-            }
-        }
-
-        @Override
-        public void cancel() {
-            running = false;
-        }
     }
 
     /**
@@ -143,5 +97,4 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         job.init();
         job.execute(env);
     }
-
 }
