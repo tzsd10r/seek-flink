@@ -38,8 +38,8 @@ public class HdfsToKafkaJob extends JobGeneric {
 
         String path = parameterTool.getRequired("fs.src.dir." + suffix) + "/2016-03-17";
 
-        DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
-            .map(new CountRecords<String>());
+        DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES);
+        // .map(new CountRecords<String>());
 
         // jsonRecords.map(new RichMapFunction<String, String>() {
         // private static final long serialVersionUID = 1L;
@@ -60,8 +60,8 @@ public class HdfsToKafkaJob extends JobGeneric {
 
         String topic = parameterTool.get("kafka.sink.topic." + suffix);
 
-        // jsonRecords.addSink(new KafkaSinkBuilder().build(topic, parameterTool.getProperties()))
-        // .name("kafka-stage");
+        jsonRecords.addSink(new KafkaSinkBuilder().build(topic, parameterTool.getProperties()))
+        .name("write json records to kafka");
 
         env.execute("Reads from HDFS and writes to Kafka");
     }
