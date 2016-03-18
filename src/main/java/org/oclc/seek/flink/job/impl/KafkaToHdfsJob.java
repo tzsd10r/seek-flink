@@ -11,7 +11,7 @@ package org.oclc.seek.flink.job.impl;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.sink.HdfsSinkBuilder;
+import org.oclc.seek.flink.sink.HdfsSink;
 import org.oclc.seek.flink.source.KafkaSource;
 
 /**
@@ -44,8 +44,8 @@ public class KafkaToHdfsJob extends JobGeneric {
         DataStream<String> events = env.addSource(new KafkaSource(suffix, parameterTool.getProperties()).getSource())
             .name(KafkaSource.DESCRIPTION);
 
-        events.addSink(new HdfsSinkBuilder(suffix, parameterTool.getProperties()).getSink())
-        .name(HdfsSinkBuilder.DESCRIPTION);
+        events.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
+        .name(HdfsSink.DESCRIPTION);
 
         env.execute("Read Events from Kafka and write to HDFS");
     }

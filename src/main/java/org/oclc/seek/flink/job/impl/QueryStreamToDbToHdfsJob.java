@@ -14,7 +14,7 @@ import org.oclc.seek.flink.function.DBFetcherCallBack;
 import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.EntryFind;
-import org.oclc.seek.flink.sink.HdfsSinkBuilder;
+import org.oclc.seek.flink.sink.HdfsSink;
 import org.oclc.seek.flink.source.QueryGeneratorSource;
 
 /**
@@ -92,8 +92,8 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
             .name(JsonTextParser.DESCRIPTION);
 
-        jsonRecords.addSink(new HdfsSinkBuilder(suffix, parameterTool.getProperties()).getSink())
-        .name(HdfsSinkBuilder.DESCRIPTION);
+        jsonRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
+        .name(HdfsSink.DESCRIPTION);
 
         env.execute("Receives SQL queries... executes them and then writes to hdfs");
     }

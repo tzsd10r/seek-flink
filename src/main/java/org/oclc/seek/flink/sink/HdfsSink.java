@@ -19,7 +19,7 @@ import org.apache.flink.streaming.connectors.fs.StringWriter;
 /**
  *
  */
-public class HdfsSinkBuilder {
+public class HdfsSink {
     /**
      * Concise description of what this class represents.
      */
@@ -37,7 +37,7 @@ public class HdfsSinkBuilder {
      * @param props
      * @param suffix
      */
-    public HdfsSinkBuilder(final String suffix, final Properties props) {
+    public HdfsSink(final String suffix, final Properties props) {
         this(init(suffix, props));
     }
 
@@ -47,7 +47,7 @@ public class HdfsSinkBuilder {
      *
      * @param path
      */
-    public HdfsSinkBuilder(final String path) {
+    public HdfsSink(final String path) {
         sink = new RollingSink<String>(path);
     }
 
