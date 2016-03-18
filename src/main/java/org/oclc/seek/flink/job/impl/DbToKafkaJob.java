@@ -56,22 +56,12 @@ public class DbToKafkaJob extends JobGeneric {
             .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, String>() {
                 private static final long serialVersionUID = 1L;
 
-                // private LongCounter recordCount = new LongCounter();
-
-                // @Override
-                // public void open(final Configuration parameters) throws Exception {
-                // super.open(parameters);
-                // getRuntimeContext().addAccumulator("recordCount", recordCount);
-                // }
-
                 @Override
                 public String map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
-                    // recordCount.add(1L);
                     return tuple.f1.toJson();
                 }
             }).name("convert db record into json");
 
-        // DataStreamSink<String> kafka =
         jsonRecords.addSink(
             new KafkaSinkBuilder().build(
                 parameterTool.get("kafka.sink.topic." + suffix),

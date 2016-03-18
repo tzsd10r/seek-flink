@@ -8,12 +8,10 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.api.common.accumulators.LongCounter;
-import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
+import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.sink.KafkaSinkBuilder;
 
@@ -36,36 +34,36 @@ public class HdfsToKafkaJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        // defines how many times the job is restarted after a failure
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
+        String suffix = parameterTool.getRequired("db.table");
 
-        DataStream<String> text =
-            env.readFileStream("fs.src.dir." + parameterTool.getRequired("db.table"), 1000,
-                WatchType.ONLY_NEW_FILES);
+        String path = parameterTool.getRequired("fs.src.dir" + suffix);
 
-        text.map(new RichMapFunction<String, String>() {
-            private static final long serialVersionUID = 1L;
-            private LongCounter recordCount = new LongCounter();
+        DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
+            .map(new CountRecords<String>());
 
-            @Override
-            public void open(final Configuration parameters) throws Exception {
-                super.open(parameters);
-                getRuntimeContext().addAccumulator("recordCount", recordCount);
-            }
+        // jsonRecords.map(new RichMapFunction<String, String>() {
+        // private static final long serialVersionUID = 1L;
+        // private LongCounter recordCount = new LongCounter();
+        //
+        // @Override
+        // public void open(final Configuration parameters) throws Exception {
+        // super.open(parameters);
+        // getRuntimeContext().addAccumulator("recordCount", recordCount);
+        // }
+        //
+        // @Override
+        // public String map(final String value) throws Exception {
+        // recordCount.add(1L);
+        // return value;
+        // }
+        // }).name("json-records")
 
-            @Override
-            public String map(final String value) throws Exception {
-                recordCount.add(1L);
-                return value;
-            }
-        }).name("json-records")
-        .addSink(
-            new KafkaSinkBuilder().build(
-                parameterTool.get("kafka.stage.topic." + parameterTool.getRequired("db.table")),
-                parameterTool.getProperties()))
-                .name("kafka-stage");
+        String topic = parameterTool.get("kafka.sink.topic." + suffix);
 
-        env.execute("Reads from HDFS and writes to Kafka Stage");
+        jsonRecords.addSink(new KafkaSinkBuilder().build(topic, parameterTool.getProperties()))
+        .name("kafka-stage");
+
+        env.execute("Reads from HDFS and writes to Kafka");
     }
 
     /**
