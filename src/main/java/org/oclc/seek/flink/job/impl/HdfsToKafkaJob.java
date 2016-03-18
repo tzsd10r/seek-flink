@@ -36,7 +36,7 @@ public class HdfsToKafkaJob extends JobGeneric {
 
         String suffix = parameterTool.getRequired("db.table");
 
-        String path = parameterTool.getRequired("fs.src.dir." + suffix) + "/2016-03-17";
+        String path = parameterTool.getRequired("fs.src.dir." + suffix);
 
         DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
             .map(new CountRecords<String>());
