@@ -16,6 +16,7 @@ import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.function.DBFetcherCallBack;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.EntryFind;
+import org.oclc.seek.flink.sink.HdfsSinkBuilder;
 
 import scala.collection.mutable.StringBuilder;
 
@@ -42,13 +43,8 @@ import scala.collection.mutable.StringBuilder;
  * http://flink.apache.org/docs/latest/programming_guide.html<br>
  * http://flink.apache.org/docs/latest/examples.html <br>
  * <p>
- * Note that the Kafka source/sink is expecting the following parameters to be set <br>
- * - "bootstrap.servers" (comma separated list of kafka brokers) <br>
- * - "zookeeper.connect" (comma separated list of zookeeper servers) <br>
- * - "group.id" the id of the consumer group <br>
- * - "topic" the name of the topic to read data from.
  */
-public class QueryStreamToDbToKafkaJob extends JobGeneric {
+public class QueryStreamToDbToHdfsJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -88,12 +84,6 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             .name("get db records using callback");
 
         /*
-         * Don't use... terrible performance
-         */
-        // DataStream<EntryFind> records = queries.flatMap(new
-        // DBFetcherItemReader()).name("get db records using item reader");
-
-        /*
          * Seems to have better performance.
          * Stateless and reusable...
          * --- using 'hex'
@@ -115,11 +105,9 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
             }
         }).name("transform db records into json");
 
-        // jsonRecords.addSink(
-        // new KafkaSinkBuilder().build(
-        // parameterTool.get("kafka.sink.topic." + prefix),
-        // parameterTool.getProperties()))
-        // .name("kafka");
+        jsonRecords.addSink(
+            new HdfsSinkBuilder().build("fs.sink.dir." + parameterTool.getRequired("db.table")))
+            .name("put json records on filesystem");
 
         env.execute("Receives SQL queries... executes them and then writes to Kafka");
     }
@@ -171,7 +159,7 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         System.setProperty("environment", "test");
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        QueryStreamToDbToKafkaJob job = new QueryStreamToDbToKafkaJob();
+        QueryStreamToDbToHdfsJob job = new QueryStreamToDbToHdfsJob();
         job.init();
         job.execute(env);
     }
