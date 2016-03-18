@@ -9,7 +9,7 @@
 package org.oclc.seek.flink.sink;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.fs.DateTimeBucketer;
+import org.apache.flink.streaming.connectors.fs.NonRollingBucketer;
 import org.apache.flink.streaming.connectors.fs.RollingSink;
 import org.apache.flink.streaming.connectors.fs.StringWriter;
 
@@ -24,7 +24,7 @@ public class HdfsSinkBuilder {
     public SinkFunction<String> build(final String path) {
         RollingSink<String> sink = new RollingSink<String>(path);
 
-        sink.setBucketer(new DateTimeBucketer("yyyy-MM-dd"));
+        sink.setBucketer(new NonRollingBucketer());
         sink.setPendingSuffix("");
         sink.setWriter(new StringWriter<String>());
 
