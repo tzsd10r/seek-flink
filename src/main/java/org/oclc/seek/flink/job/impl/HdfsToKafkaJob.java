@@ -38,8 +38,8 @@ public class HdfsToKafkaJob extends JobGeneric {
 
         String path = parameterTool.getRequired("fs.src.dir." + suffix) + "/2016-03-17";
 
-        DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES);
-        // .map(new CountRecords<String>());
+        DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
+            .map(new CountRecords<String>());
 
         // jsonRecords.map(new RichMapFunction<String, String>() {
         // private static final long serialVersionUID = 1L;
