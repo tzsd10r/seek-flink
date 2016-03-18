@@ -43,10 +43,10 @@ public class KafkaToHdfsJob extends JobGeneric {
             "kafka.src.topic." + parameterTool.getRequired("db.table"),
             parameterTool.getProperties()), "kafka source");
 
-        stream
-        .addSink(
-            new HdfsSinkBuilder().build("fs.stage.dir." + parameterTool.getRequired("db.table")))
-            .name("filesystem sink");
+        String path = parameterTool.getRequired("fs.sink.dir." + parameterTool.getRequired("db.table"));
+
+        stream.addSink(new HdfsSinkBuilder().build(path))
+            .name("put json records on filesystem");
 
         env.execute("Read Events from Kafka and write to HDFS");
     }

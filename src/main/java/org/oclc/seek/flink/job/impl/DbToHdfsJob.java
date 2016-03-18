@@ -73,8 +73,9 @@ public class DbToHdfsJob extends JobGeneric {
         // }).name("transform db record into json");
 
         // DataStreamSink<String> filesystem =
-        // jsonRecords.addSink(
-        // new HdfsSinkBuilder().build("fs.sink.dir." + parameterTool.getRequired("db.table")))
+        // String path = parameterTool.getRequired("fs.sink.dir." + suffix);
+        //
+        // jsonRecords.addSink(new HdfsSinkBuilder().build(path))
         // .name("put json records on filesystem");
 
         env.execute("Queries the DB and drops results onto Filesystem");

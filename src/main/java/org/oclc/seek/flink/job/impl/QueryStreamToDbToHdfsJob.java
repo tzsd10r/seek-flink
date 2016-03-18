@@ -63,7 +63,7 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        final String prefix = parameterTool.getRequired("db.table");
+        final String suffix = parameterTool.getRequired("db.table");
 
         /*
          * Query Generator stream
@@ -105,11 +105,12 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
             }
         }).name("transform db records into json");
 
-        jsonRecords.addSink(
-            new HdfsSinkBuilder().build("fs.sink.dir." + parameterTool.getRequired("db.table")))
-            .name("put json records on filesystem");
+        String path = parameterTool.getRequired("fs.sink.dir." + suffix);
 
-        env.execute("Receives SQL queries... executes them and then writes to Kafka");
+        jsonRecords.addSink(new HdfsSinkBuilder().build(path))
+        .name("put json records on filesystem");
+
+        env.execute("Receives SQL queries... executes them and then writes to hdfs");
     }
 
     /**
@@ -137,7 +138,7 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
                     // value.append(x);
                     // value.append(a);
                     ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                    System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
+                    // System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
                     Thread.sleep(100);
                 }
                 // }
