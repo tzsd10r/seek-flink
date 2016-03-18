@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -27,7 +28,7 @@ import org.oclc.seek.flink.source.JDBCSource;
 import com.google.gson.Gson;
 
 /**
- *
+ * This is a playground class...
  */
 public class DBImportIssnlJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -52,10 +53,10 @@ public class DBImportIssnlJob extends JobGeneric {
         TupleTypeInfo tupleTypeInfo = new TupleTypeInfo(Tuple2.class, BasicTypeInfo.STRING_TYPE_INFO,
             BasicTypeInfo.STRING_TYPE_INFO);
 
-        DataSource<Tuple2<String, String>> output =
+        DataSource<Tuple2<String, String>> source =
             env.createInput(new JDBCSource<Tuple2<Long, String>>().build(parameterTool), tupleTypeInfo);
 
-        output.flatMap(new RichFlatMapFunction<Tuple2<String, String>, String>() {
+        DataSet<String> records = source.flatMap(new RichFlatMapFunction<Tuple2<String, String>, String>() {
             private static final long serialVersionUID = 1L;
             private String[] fields;
 
@@ -85,11 +86,11 @@ public class DBImportIssnlJob extends JobGeneric {
 
                 output.collect(new Gson().toJson(map));
             }
-        }).withParameters(parameterTool.getConfiguration())
-        .writeAsText(
-            parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"))
-            + "/entry-find.txt", WriteMode.OVERWRITE)
-            .name("filesystem sink");
+        }).withParameters(parameterTool.getConfiguration());;
+
+        String path = parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"));
+        records.writeAsText(path + "/entry-find.txt", WriteMode.OVERWRITE)
+        .name("filesystem sink");
 
         env.execute("Fetching Data from Database");
     }

@@ -19,6 +19,10 @@ import org.apache.flink.configuration.Configuration;
  */
 public class CountRecords<T> extends RichMapFunction<T, T> {
     private static final long serialVersionUID = 1L;
+    /**
+     * Concise description of what this class represents.
+     */
+    public static final String DESCRIPTION = "Counts records";
     private LongCounter recordCount = new LongCounter();
 
     @Override
@@ -32,5 +36,4 @@ public class CountRecords<T> extends RichMapFunction<T, T> {
         recordCount.add(1L);
         return obj;
     }
-
 }

@@ -11,12 +11,12 @@ package org.oclc.seek.flink.socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.oclc.seek.flink.record.GenericRecord;
+import org.oclc.seek.flink.record.GenericWritable;
 
 /**
  *
  */
-public class DerbyInputRecord extends GenericRecord {
+public class DerbyInputRecord extends GenericWritable {
     private String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     private String url = "jdbc:derby:memory:ebookshop";
     private String user = "";

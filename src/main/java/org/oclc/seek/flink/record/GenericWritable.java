@@ -23,7 +23,7 @@ import org.apache.hadoop.mapred.lib.db.DBWritable;
 /**
  *
  */
-public class GenericRecord implements Writable, DBWritable {
+public class GenericWritable implements Writable, DBWritable {
     @Override
     public void readFields(final ResultSet arg0) throws SQLException {
     }

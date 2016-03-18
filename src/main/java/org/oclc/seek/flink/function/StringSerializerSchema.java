@@ -19,7 +19,6 @@ import org.apache.flink.streaming.util.serialization.SerializationSchema;
  *
  */
 public class StringSerializerSchema implements DeserializationSchema<String>, SerializationSchema<String, byte[]> {
-    // public class StringSerializerSchema implements DeserializationSchema<String>, SerializationSchema<String> {
     private static final long serialVersionUID = 1L;
 
     @Override

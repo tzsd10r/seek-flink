@@ -15,9 +15,9 @@ import javax.sql.DataSource;
 
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.source.QueryGeneratorSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
@@ -82,45 +82,11 @@ public class QueryStreamJob extends JobGeneric {
          * Query Generator stream
          */
         DataStream<String> queries = env
-            .addSource(new QueryGeneratorStream()).map(new CountRecords<String>())
-            .name("generator of queries")
+            .addSource(new QueryGeneratorSource()).map(new CountRecords<String>())
+            .name(QueryGeneratorSource.DESCRIPTION)
             .rebalance();
 
         env.execute("Receives SQL queries... executes them and then writes to Kafka stage");
-    }
-
-    /**
-     *
-     */
-    public static class QueryGeneratorStream implements SourceFunction<String> {
-        private static final long serialVersionUID = 1L;
-        boolean running = true;
-        long i = 1;
-
-        static final String[] hex = {
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"
-        };
-
-        @Override
-        public void run(final SourceContext<String> ctx) throws Exception {
-            for (String h : hex) {
-                for (String e : hex) {
-                    for (String x : hex) {
-                        for (String a : hex) {
-                            String value = h + e + x + a;
-                            String query = "SELECT COUNT(*) FROM entry_find WHERE id LIKE '" + value + "%'";
-                            System.out.println(query);
-                            ctx.collect(query);
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void cancel() {
-            running = false;
-        }
     }
 
     /**

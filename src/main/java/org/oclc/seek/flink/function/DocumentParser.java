@@ -1,0 +1,84 @@
+/****************************************************************************************************************
+ *
+ *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ *
+ *  OCLC proprietary information: the enclosed materials contain
+ *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ *  any part to any third party or used by any person for any purpose, without written
+ *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
+ *
+ ******************************************************************************************************************/
+package org.oclc.seek.flink.function;
+
+import groovy.json.JsonParserType;
+import groovy.json.JsonSlurper;
+
+import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
+import org.oclc.seek.flink.document.KbwcEntryDocument;
+
+import com.google.gson.Gson;
+
+/**
+ *
+ */
+public class DocumentParser extends RichMapFunction<String, KbwcEntryDocument> {
+    private static final long serialVersionUID = 1L;
+    /**
+     * Concise description of what this class does.
+     */
+    public static final String DESCRIPTION = "Transforms JSON text into the appropriate Object.";
+    /**
+     * The default JSON parser is Gson.
+     * The only other option at the moment is JsonSlurper (Groovy utility)
+     */
+    private Gson gson;
+
+    @Override
+    public void open(final Configuration configuration) throws Exception {
+        super.open(configuration);
+        ParameterTool parameterTool =
+            (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+
+        if (parameterTool.getRequired("json.text.parser").equals("gson")) {
+            gson = new Gson();
+        }
+    }
+
+    @Override
+    public KbwcEntryDocument map(final String json) throws Exception {
+        if (gson != null) {
+            /*
+             * - Receives json param
+             * - Convert json text to document
+             */
+            new Gson().fromJson(json, KbwcEntryDocument.class);
+        }
+
+        return (KbwcEntryDocument) new JsonSlurper().setType(JsonParserType.INDEX_OVERLAY).parseText(json);
+    }
+
+    // @SuppressWarnings("unchecked")
+    // private static <T> T build(final GenericWritable input, final Class type) {
+    // if (input == null) {
+    // return null;
+    // }
+    // Gson g = new Gson();
+    // String s = g.toJson(input);
+    // return (T) g.fromJson(s, type);
+    // }
+    //
+    // public static <T> List<T> build(final List<? extends GenericWritable> efs, final T instance) {
+    // if (efs == null) {
+    // return null;
+    // }
+    // Gson g = new Gson();
+    // String s = g.toJson(efs);
+    // Type collectionType = new TypeToken<List<T>>() {
+    // }.getType();
+    // return g.fromJson(s, collectionType);
+    // // return g.fromJson(s, instance.getClass());
+    // }
+
+}

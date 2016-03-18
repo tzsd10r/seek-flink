@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  *
  */
-public class DbInputRecord extends GenericRecord {
+public class DbInputRecord extends GenericWritable {
     private String driver;
     private String url;
     private String user;
@@ -32,11 +32,18 @@ public class DbInputRecord extends GenericRecord {
         entryFind = new EntryFindRowMapper().mapRow(rs, count.incrementAndGet());
     }
 
+    // /**
+    // * @return
+    // */
+    // public String toJson() {
+    // return entryFind.toJson();
+    // }
+
     /**
      * @return
      */
-    public String toJson() {
-        return entryFind.toJson();
+    public EntryFind getEntryFind() {
+        return entryFind;
     }
 
     /**

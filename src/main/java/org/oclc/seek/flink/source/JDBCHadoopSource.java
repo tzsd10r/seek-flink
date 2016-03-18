@@ -22,37 +22,10 @@ import org.oclc.seek.flink.record.DbInputRecord;
  *
  */
 public class JDBCHadoopSource {
-    // /**
-    // * @param dbInputRecord
-    // * @param clazz
-    // * @return an instance of {@link HadoopInputFormat}
-    // * @throws IOException
-    // */
-    // public HadoopInputFormat<LongWritable, DbInputRecord> build_(final DbInputRecord dbInputRecord,
-    // final Class<DbInputRecord> clazz) throws IOException {
-    // // Get job instance
-    // JobConf job = new JobConf();
-    //
-    // // Setup Hadoop DBInputFormat by creating a Flink Wrapper (HadoopInputFormat) with parameters that specify
-    // // the Hadoop InputFormat, the KEY and VALUE types, and the job
-    // HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
-    // new HadoopInputFormat<LongWritable, DbInputRecord>(
-    // new DBInputFormat(), LongWritable.class, clazz, job);
-    //
-    // // Get the Hadoop Configuration... which is obtained through the HADOOP_CONF_DIR found in the
-    // // flink-conf.yaml file. Use it to apply additional configuration, as needed
-    // Configuration hadoopConfiguration = hadoopInputFormat.getJobConf();
-    //
-    // // Add database configuration to Hadoop Configuration
-    // DBConfiguration.configureDB(hadoopConfiguration, dbInputRecord.driver(),
-    // dbInputRecord.url(),
-    // dbInputRecord.user(), dbInputRecord.password());
-    //
-    // // Provide information regarding source... where/what data will be fetched/read
-    // DBInputFormat.setInput(job, clazz, dbInputRecord.table(), null, null, dbInputRecord.fields());
-    //
-    // return hadoopInputFormat;
-    // }
+    /**
+     * Concise description of what this class represents.
+     */
+    public static final String DESCRIPTION = "Extracts records from database using Map/Reduce.";
 
     /**
      * @param dbInputRecord
@@ -88,6 +61,8 @@ public class JDBCHadoopSource {
         conf.setNumTasksToExecutePerJvm(1);
 
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 10));
+
+        // conf.writeXml(System.out);
 
         return hadoopInputFormat;
     }

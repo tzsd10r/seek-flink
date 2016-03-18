@@ -37,6 +37,7 @@ public abstract class JobGeneric implements JobContract {
         Properties props = new Properties();
 
         String env = System.getProperty("environment");
+
         String configFile = "conf/config." + env + ".properties";
 
         if (StringUtils.isBlank(env) || env.equalsIgnoreCase("test")) {
@@ -52,6 +53,10 @@ public abstract class JobGeneric implements JobContract {
             e.printStackTrace();
             throw new RuntimeException("Failed to load the properties file... [" + configFile + "]");
         }
+
+        String defaultJsonParser = "gson";
+        props.put("json.text.parser",
+            System.getProperty("json.text.parser") == null ? defaultJsonParser : System.getProperty("json.parser"));
 
         parameterTool = ParameterTool.fromMap(propertiesToMap(props));
     }

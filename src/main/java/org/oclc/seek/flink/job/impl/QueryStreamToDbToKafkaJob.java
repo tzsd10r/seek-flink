@@ -8,16 +8,15 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.function.DBFetcherCallBack;
+import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.job.impl.QueryStreamToDbToSolrJob.QueryGeneratorStream;
 import org.oclc.seek.flink.record.EntryFind;
-
-import scala.collection.mutable.StringBuilder;
+import org.oclc.seek.flink.sink.KafkaSink;
+import org.oclc.seek.flink.source.QueryGeneratorSource;
 
 /**
  * Here, you can start creating your execution plan for Flink.
@@ -61,37 +60,22 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // create a checkpoint every 5 secodns
-        // env.enableCheckpointing(5000);
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-
-        final String prefix = parameterTool.getRequired("db.table");
 
         /*
          * Query Generator stream
          */
-        DataStream<String> queries = env
-            .addSource(new QueryGeneratorStream())
-            .name("generator of queries");
-
-        // DataStream<EntryFind> records = queries.flatMap(new
-        // DBFetcherResultSetExtractor()).name("get db records using resultset extractor");
-
-        DataStream<EntryFind> records = queries.flatMap(new
-            DBFetcherCallBack())
-            /*
-             * Enforces the even distribution over all parallel instances of the following task
-             */
-            .rebalance()
-            .name("get db records using callback");
+        DataStream<String> queries = env.addSource(new QueryGeneratorStream())
+            .name(QueryGeneratorSource.DESCRIPTION);
 
         /*
-         * Don't use... terrible performance
+         * The rebalance() method enforces the even distribution over all parallel instances for the task that will
+         * be executing on the DataStream produced here
          */
-        // DataStream<EntryFind> records = queries.flatMap(new
-        // DBFetcherItemReader()).name("get db records using item reader");
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
+            .rebalance()
+            .name(DBFetcherCallBack.DESCRIPTION);
 
         /*
          * Seems to have better performance.
@@ -106,61 +90,14 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         // DataStream<EntryFind> records =
         // queries.flatMap(new DBFetcherRowMapper()).name("get db records using row mapper");
 
-        DataStream<String> jsonRecords = records.flatMap(new FlatMapFunction<EntryFind, String>() {
-            private static final long serialVersionUID = 1L;
+        DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
+            .name(JsonTextParser.DESCRIPTION);
 
-            @Override
-            public void flatMap(final EntryFind record, final Collector<String> collector) throws Exception {
-                collector.collect(record.toJson());
-            }
-        }).name("transform db records into json");
-
-        // jsonRecords.addSink(
-        // new KafkaSinkBuilder().build(
-        // parameterTool.get("kafka.sink.topic." + prefix),
-        // parameterTool.getProperties()))
-        // .name("kafka");
+        String suffix = parameterTool.getRequired("db.table");
+        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
+        .name(KafkaSink.DESCRIPTION);
 
         env.execute("Receives SQL queries... executes them and then writes to Kafka");
-    }
-
-    /**
-     *
-     */
-    public static class QueryGeneratorStream implements SourceFunction<String> {
-        private static final long serialVersionUID = 1L;
-        boolean running = true;
-        long i = 1;
-
-        static final String[] hex = {
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"
-        };
-
-        @Override
-        public void run(final SourceContext<String> ctx) throws Exception {
-            StringBuilder value;
-            for (String h : hex) {
-                for (String e : hex) {
-                    // for (String x : hex) {
-                    // for (String a : hex) {
-                    value = new StringBuilder();
-                    value.append(h);
-                    value.append(e);
-                    // value.append(x);
-                    // value.append(a);
-                    ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                    System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                    Thread.sleep(100);
-                }
-                // }
-                // }
-            }
-        }
-
-        @Override
-        public void cancel() {
-            running = false;
-        }
     }
 
     /**

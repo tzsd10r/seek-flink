@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
 import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.sink.KafkaSinkBuilder;
+import org.oclc.seek.flink.sink.KafkaSink;
 
 /**
  *
@@ -28,9 +28,6 @@ public class HdfsToKafkaJob extends JobGeneric {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // create a checkpoint every 5 secodns
-        // env.enableCheckpointing(5000);
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
@@ -39,29 +36,10 @@ public class HdfsToKafkaJob extends JobGeneric {
         String path = parameterTool.getRequired("fs.src.dir." + suffix);
 
         DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
-            .map(new CountRecords<String>());
+            .map(new CountRecords<String>()).name(CountRecords.DESCRIPTION);
 
-        // jsonRecords.map(new RichMapFunction<String, String>() {
-        // private static final long serialVersionUID = 1L;
-        // private LongCounter recordCount = new LongCounter();
-        //
-        // @Override
-        // public void open(final Configuration parameters) throws Exception {
-        // super.open(parameters);
-        // getRuntimeContext().addAccumulator("recordCount", recordCount);
-        // }
-        //
-        // @Override
-        // public String map(final String value) throws Exception {
-        // recordCount.add(1L);
-        // return value;
-        // }
-        // }).name("json-records")
-
-        String topic = parameterTool.get("kafka.sink.topic." + suffix);
-
-        jsonRecords.addSink(new KafkaSinkBuilder().build(topic, parameterTool.getProperties()))
-        .name("write json records to kafka");
+        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
+        .name(KafkaSink.DESCRIPTION);
 
         env.execute("Reads from HDFS and writes to Kafka");
     }
@@ -71,14 +49,7 @@ public class HdfsToKafkaJob extends JobGeneric {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        String configFile;
-        if (args.length == 0) {
-            configFile = "conf/conf.prod.properties";
-            System.out.println("Missing input : conf file location, using default: " + configFile);
-        } else {
-            configFile = args[0];
-        }
-
+        System.setProperty("environment", "test");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         HdfsToKafkaJob job = new HdfsToKafkaJob();
         job.init();

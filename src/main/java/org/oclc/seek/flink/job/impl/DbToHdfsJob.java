@@ -30,12 +30,6 @@ public class DbToHdfsJob extends JobGeneric {
 
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // create a checkpoint every 1000 ms
-        // env.enableCheckpointing(1000);
-
-        // set the timeout low to minimize latency
-        // env.setBufferTimeout(10);
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 

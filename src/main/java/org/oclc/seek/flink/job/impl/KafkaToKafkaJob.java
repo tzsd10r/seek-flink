@@ -8,15 +8,11 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.api.common.accumulators.LongCounter;
-import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.sink.KafkaSinkBuilder;
-import org.oclc.seek.flink.source.KafkaSourceBuilder;
+import org.oclc.seek.flink.sink.KafkaSink;
+import org.oclc.seek.flink.source.KafkaSource;
 
 /**
  * Note that the Kafka source/sink is expecting the following parameters to be set
@@ -38,45 +34,21 @@ public class KafkaToKafkaJob extends JobGeneric {
      */
     @Override
     public void execute(final StreamExecutionEnvironment env) throws Exception {
-        // create a checkpoint every 5 seconds
-        // env.enableCheckpointing(5000);
-
-        // defines how many times the job is restarted after a failure
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        final String prefix = parameterTool.getRequired("db.table");
+        String suffix = parameterTool.getRequired("db.table");
 
-        DataStream<String> jsonRecords = env
-            .addSource(new KafkaSourceBuilder().build(
-                parameterTool.get("kafka.src.topic." + prefix),
-                parameterTool.getProperties())).name("kafka source")
-                .rebalance();
+        DataStream<String> jsonRecords =
+            env.addSource(new KafkaSource(suffix, parameterTool.getProperties()).getSource())
+            .name(KafkaSource.DESCRIPTION)
+            .rebalance();
 
-        DataStream<String> enrichedJsonRecords = jsonRecords.map(new RichMapFunction<String, String>() {
-            private static final long serialVersionUID = 1L;
-            private LongCounter recordCount = new LongCounter();
+        // DataStream<String> enrichedJsonRecords = jsonRecords.map(new CountRecords<String>())
+        // .name(CountRecords.DESCRIPTION);
 
-            @Override
-            public void open(final Configuration parameters) throws Exception {
-                super.open(parameters);
-                getRuntimeContext().addAccumulator("recordCount", recordCount);
-            }
-
-            @Override
-            public String map(final String value) throws Exception {
-                recordCount.add(1L);
-                return prefix + ":{" + value + "}";
-            }
-        }).name("add root element to json record");
-
-        DataStreamSink<String> kafka = enrichedJsonRecords.addSink(
-            new KafkaSinkBuilder().build(
-                parameterTool.get("kafka.stage.topic." + prefix),
-                parameterTool.getProperties()))
-                .name("kafka stage");
+        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
+        .name(KafkaSink.DESCRIPTION);
 
         env.execute("Read Events from Kafka Source and write to Kafka Stage");
     }
@@ -86,14 +58,7 @@ public class KafkaToKafkaJob extends JobGeneric {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        String configFile;
-        if (args.length == 0) {
-            configFile = "conf/conf.prod.properties";
-            System.out.println("Missing input : conf file location, using default: " + configFile);
-        } else {
-            configFile = args[0];
-        }
-
+        System.setProperty("environment", "test");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         KafkaToKafkaJob job = new KafkaToKafkaJob();
         job.init();

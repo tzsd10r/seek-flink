@@ -8,15 +8,15 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.function.CountRecords;
+import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.sink.KafkaSinkBuilder;
+import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
 
 /**
@@ -44,29 +44,17 @@ public class DbToKafkaJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        final String suffix = parameterTool.getRequired("db.table");
-
         DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
             env.createInput(new JDBCHadoopSource().build(parameterTool))
             .map(new CountRecords<Tuple2<LongWritable, DbInputRecord>>())
-            .name("db source");
+                .name(JDBCHadoopSource.DESCRIPTION);
 
-        DataStream<String> jsonRecords =
-            rawRecords
-            .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, String>() {
-                private static final long serialVersionUID = 1L;
+        DataStream<String> jsonRecords = rawRecords.map(new JsonTextParser<Tuple2<LongWritable, DbInputRecord>>())
+            .name(JsonTextParser.DESCRIPTION);
 
-                @Override
-                public String map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
-                    return tuple.f1.toJson();
-                }
-            }).name("convert db record into json");
-
-        jsonRecords.addSink(
-            new KafkaSinkBuilder().build(
-                parameterTool.get("kafka.sink.topic." + suffix),
-                parameterTool.getProperties()))
-                .name("put json records on Kafka");
+        String suffix = parameterTool.getRequired("db.table");
+        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
+        .name(KafkaSink.DESCRIPTION);
 
         env.execute("Queries the DB and drops results onto Kafka");
     }

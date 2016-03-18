@@ -11,16 +11,14 @@ package org.oclc.seek.flink.job.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.flink.api.common.accumulators.LongCounter;
-import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.builder.DbInputRecordBuilder;
+import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.record.DbInputRecord;
-import org.oclc.seek.flink.sink.SolrSinkBuilder;
+import org.oclc.seek.flink.sink.SolrSink;
 
 /**
  *
@@ -55,27 +53,11 @@ public class SolrEmitterJob extends JobGeneric {
         // Streams json records every 10 ms
         DataStream<DbInputRecord> text = env.addSource(new SimpleStringGenerator());
 
-        //
-        DataStream<String> jsonRecords = text.map(new RichMapFunction<DbInputRecord, String>() {
-            private static final long serialVersionUID = 1L;
-            private LongCounter recordCount = new LongCounter();
+        DataStream<String> jsonRecords = text.map(new JsonTextParser<DbInputRecord>())
+            .name(JsonTextParser.DESCRIPTION);
 
-            @Override
-            public void open(final Configuration parameters) throws Exception {
-                super.open(parameters);
-                getRuntimeContext().addAccumulator("recordCount", recordCount);
-            }
-
-            @Override
-            public String map(final DbInputRecord record) throws Exception {
-                recordCount.add(1L);
-                return record.toJson();
-            }
-        }).name("json-records");
-
-        // jsonRecords.addSink(new SolrSinkBuilder<String>(config, new SolrDocumentBuilder()))
-        jsonRecords.addSink(new SolrSinkBuilder<String>().build(config))
-            .name("Index to solr");
+        jsonRecords.addSink(new SolrSink<String>(config))
+        .name("Index to solr");
 
         env.execute("Writes json records to Solr from a stream of generated records");
     }

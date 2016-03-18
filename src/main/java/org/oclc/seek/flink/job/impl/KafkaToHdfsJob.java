@@ -8,11 +8,11 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.sink.HdfsSinkBuilder;
-import org.oclc.seek.flink.source.KafkaSourceBuilder;
+import org.oclc.seek.flink.source.KafkaSource;
 
 /**
  *
@@ -39,14 +39,13 @@ public class KafkaToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStreamSource<String> stream = env.addSource(new KafkaSourceBuilder().build(
-            "kafka.src.topic." + parameterTool.getRequired("db.table"),
-            parameterTool.getProperties()), "kafka source");
+        String suffix = parameterTool.getRequired("db.table");
 
-        String path = parameterTool.getRequired("fs.sink.dir." + parameterTool.getRequired("db.table"));
+        DataStream<String> events = env.addSource(new KafkaSource(suffix, parameterTool.getProperties()).getSource())
+            .name(KafkaSource.DESCRIPTION);
 
-        stream.addSink(new HdfsSinkBuilder().build(path))
-            .name("put json records on filesystem");
+        events.addSink(new HdfsSinkBuilder(suffix, parameterTool.getProperties()).getSink())
+        .name(HdfsSinkBuilder.DESCRIPTION);
 
         env.execute("Read Events from Kafka and write to HDFS");
     }

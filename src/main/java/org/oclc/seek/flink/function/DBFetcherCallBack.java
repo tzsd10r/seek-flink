@@ -32,6 +32,10 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  */
 public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
     private static final long serialVersionUID = 1L;
+    /**
+     * Concise description of what this class represents.
+     */
+    public static final String DESCRIPTION = "Fetcher records from database using callback.";
     private LongCounter recordCount = new LongCounter();
     private transient JdbcTemplate jdbcTemplate;
     private BaseObjectRowMapper<EntryFind> rowMapper;

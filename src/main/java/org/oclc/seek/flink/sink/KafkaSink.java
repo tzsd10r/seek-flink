@@ -12,24 +12,25 @@ import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.fs.NonRollingBucketer;
-import org.apache.flink.streaming.connectors.fs.RollingSink;
-import org.apache.flink.streaming.connectors.fs.StringWriter;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
+import org.oclc.seek.flink.function.StringSerializerSchema;
 
 /**
  *
  */
-public class HdfsSinkBuilder {
+public class KafkaSink {
     /**
      * Concise description of what this class represents.
      */
-    public static final String DESCRIPTION = "Writes text to HDFS.";
+    public static final String DESCRIPTION = "Writes events onto Kafka";
     /**
      * Generic property variable that represents the topic name
      */
-    public static String DIR = "fs.sink.dir";
+    public static String TOPIC = "kafka.sink.topic";
 
-    private RollingSink<String> sink;
+    private StringSerializerSchema serializer = new StringSerializerSchema();
+
+    private FlinkKafkaProducer<String> sink;
 
     /**
      * Constructor that makes use of a suffix when one is provided, to build the topic name.
@@ -37,42 +38,44 @@ public class HdfsSinkBuilder {
      * @param props
      * @param suffix
      */
-    public HdfsSinkBuilder(final String suffix, final Properties props) {
-        this(init(suffix, props));
+    public KafkaSink(final String suffix, final Properties props) {
+        String topic = props.getProperty(TOPIC);
+
+        if (topic == null && valueIsValid(suffix)) {
+            topic = props.getProperty(TOPIC + "." + suffix);
+        }
+
+        sink = new FlinkKafkaProducer<String>(topic, serializer, props);
     }
 
     /**
      * Constructor that only takes the properties.
      * A generic topic name will be used.
      *
-     * @param path
+     * @param props
      */
-    public HdfsSinkBuilder(final String path) {
-        sink = new RollingSink<String>(path);
-    }
+    // public KafkaSink(final Properties props) {
+    // this(null, props);
+    // }
+
+    /**
+     * Constructor that only takes the properties.
+     * A generic topic name will be used.
+     *
+     * @param props
+     */
+    // public KafkaSink(final Properties props, String topicName) {
+    // sink = new FlinkKafkaProducer<String>(topicName, serializer, props);
+    // }
 
     /**
      * @return an instance of {@link SinkFunction}
      */
     public SinkFunction<String> getSink() {
-        sink.setBucketer(new NonRollingBucketer());
-        sink.setPendingSuffix("");
-        sink.setWriter(new StringWriter<String>());
         return sink;
     }
 
-    private static boolean valueIsValid(final String value) {
+    private boolean valueIsValid(final String value) {
         return !StringUtils.isBlank(value);
     }
-
-    private static String init(final String suffix, final Properties props) {
-        String path = props.getProperty(DIR);
-
-        if (path == null && valueIsValid(suffix)) {
-            path = props.getProperty(DIR + "." + suffix);
-        }
-
-        return path;
-    }
-
 }

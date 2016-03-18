@@ -27,7 +27,7 @@ import org.oclc.seek.flink.source.JDBCSource;
 import com.google.gson.Gson;
 
 /**
- *
+ * This is playground class...
  */
 public class DBImportEntryFindJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -56,10 +56,10 @@ public class DBImportEntryFindJob extends JobGeneric {
         TupleTypeInfo tupleTypeInfo = new TupleTypeInfo(Tuple2.class, BasicTypeInfo.LONG_TYPE_INFO,
             BasicTypeInfo.STRING_TYPE_INFO);
 
-        DataSet<Tuple2<Long, String>> output =
+        DataSet<Tuple2<Long, String>> records =
             env.createInput(new JDBCSource<Tuple2<Long, String>>().build(parameterTool), tupleTypeInfo);
 
-        output.flatMap(new RichFlatMapFunction<Tuple2<Long, String>, String>() {
+        DataSet<String> output = records.flatMap(new RichFlatMapFunction<Tuple2<Long, String>, String>() {
             private static final long serialVersionUID = 1L;
             private String[] fields;
 
@@ -90,12 +90,11 @@ public class DBImportEntryFindJob extends JobGeneric {
 
                 output.collect(new Gson().toJson(map));
             }
-        }).withParameters(parameterTool.getConfiguration())
-        .writeAsText(
-            parameterTool.get(".fs.sink.dir." + parameterTool.get("db.table"))
-            + "/entry-find.txt",
-            WriteMode.OVERWRITE)
-            .name("filesystem sink");
+        }).withParameters(parameterTool.getConfiguration());
+
+        String path = parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"));
+        output.writeAsText(path + "/entry-find.txt", WriteMode.OVERWRITE)
+        .name("filesystem sink");
 
         env.execute("Fetch Data from Database and write to filesystem sink");
     }

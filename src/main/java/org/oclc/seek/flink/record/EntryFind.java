@@ -11,8 +11,6 @@
 
 package org.oclc.seek.flink.record;
 
-import groovy.json.JsonOutput;
-
 import java.util.Date;
 import java.util.TreeSet;
 
@@ -1095,19 +1093,11 @@ public class EntryFind implements BaseObject {
         return ToStringBuilder.reflectionToString(this);
     }
 
-    /**
-     * @param json
-     * @return an json record
-     */
-    public EntryFind fromJson(final String json) {
-        return new Gson().fromJson(json, this.getClass());
-    }
-
-    /**
-     * @return a json representation of this object
-     */
-    public String toJson() {
-        return JsonOutput.toJson(this);
-        // return new Gson().toJson(this);
-    }
+    // /**
+    // * @param json
+    // * @return an json record
+    // */
+    // public EntryFind fromJson(final String json) {
+    // return new Gson().fromJson(json, this.getClass());
+    // }
 }

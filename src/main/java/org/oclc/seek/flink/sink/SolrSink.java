@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * @param <T>
  */
 public class SolrSink<T> extends RichSinkFunction<T> {
-    private final Logger LOGGER = LoggerFactory.getLogger(SolrSinkBuilder.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(SolrSink.class);
     private static final long serialVersionUID = 1L;
 
     private Map<String, String> solrConfig;
@@ -35,6 +35,28 @@ public class SolrSink<T> extends RichSinkFunction<T> {
 
     public static final String COLLECTION = "solr.collection";
     public static final String ZKHOSTS = "solr.zookeeper.connect";
+
+    /**
+     * Concise description of what this class does.
+     */
+    public static String DESCRIPTION = "Writes documents to Solr collection.";
+
+    // /**
+    // * @param solrConfig
+    // * @return an instance of {@link SolrSink}
+    // */
+    // public SolrSink<T> build(final Map<String, String> solrConfig) {
+    // return new SolrSink<T>(solrConfig);
+    // }
+
+    // /**
+    // * @param zkHosts
+    // * @param collection
+    // * @return an instance of {@link SolrSink}
+    // */
+    // public SolrSink<T> build(final String zkHosts, final String collection) {
+    // return new SolrSink<T>(zkHosts, collection);
+    // }
 
     /**
      * @param solrConfig

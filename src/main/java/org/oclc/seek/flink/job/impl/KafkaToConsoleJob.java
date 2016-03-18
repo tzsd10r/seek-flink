@@ -8,15 +8,10 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.source.KafkaSourceBuilder;
+import org.oclc.seek.flink.source.KafkaSource;
 
 /**
  *
@@ -30,26 +25,6 @@ public class KafkaToConsoleJob extends JobGeneric {
     }
 
     /**
-     * @param configFile
-     * @throws Exception
-     */
-    public KafkaToConsoleJob(final String configFile) throws Exception {
-        Properties configs = new Properties();
-        try {
-            configs.load(ClassLoader.getSystemResourceAsStream(configFile));
-            Map<String, String> map = new HashMap<String, String>();
-            for (String key : configs.stringPropertyNames()) {
-                map.put(key, configs.getProperty(key));
-            }
-
-            parameterTool = ParameterTool.fromMap(map);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            System.exit(0);
-        }
-    }
-
-    /**
      * @throws Exception
      */
     @Override
@@ -57,22 +32,16 @@ public class KafkaToConsoleJob extends JobGeneric {
         // create a checkpoint every 5 seconds
         env.enableCheckpointing(5000);
 
-        // defines how many times the job is restarted after a failure
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<String> stream = env.addSource(new KafkaSourceBuilder().build(
-            "kafka.src.topic." + parameterTool.getRequired("db.table"),
-            parameterTool.getProperties()), "kafka source");
+        DataStream<String> events = env.addSource(new KafkaSource(parameterTool.getRequired("db.table"),
+            parameterTool.getProperties()).getSource()).name(KafkaSource.DESCRIPTION);
 
-        // write kafka stream to standard out.
-        stream.print();
+        // write kafka events to standard out.
+        events.print();
 
-        System.out.println(env.getExecutionPlan());
-
-        env.execute("Read from Kafka example and print out");
+        env.execute("Read from Kafka and print out");
     }
 
     /**
@@ -80,16 +49,9 @@ public class KafkaToConsoleJob extends JobGeneric {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        String configFile;
-        if (args.length == 0) {
-            configFile = "conf/conf.local.properties";
-            System.out.println("Missing input : conf file location, using default: " + configFile);
-        } else {
-            configFile = args[0];
-        }
-
+        System.setProperty("environment", "test");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        KafkaToConsoleJob kc = new KafkaToConsoleJob(configFile);
+        KafkaToConsoleJob kc = new KafkaToConsoleJob();
         kc.execute(env);
     }
 }
