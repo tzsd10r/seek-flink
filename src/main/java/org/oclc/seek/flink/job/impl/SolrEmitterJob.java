@@ -57,7 +57,7 @@ public class SolrEmitterJob extends JobGeneric {
             .name(JsonTextParser.DESCRIPTION);
 
         jsonRecords.addSink(new SolrSink<String>(config))
-        .name("Index to solr");
+        .name(SolrSink.DESCRIPTION);
 
         env.execute("Writes json records to Solr from a stream of generated records");
     }
@@ -66,7 +66,7 @@ public class SolrEmitterJob extends JobGeneric {
      *
      */
     public static class SimpleStringGenerator implements SourceFunction<DbInputRecord> {
-        private static final long serialVersionUID = 2174904787118597072L;
+        private static final long serialVersionUID = 1L;
         boolean running = true;
         long i = 1;
 

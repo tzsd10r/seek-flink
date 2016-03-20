@@ -36,7 +36,8 @@ public class KafkaToConsoleJob extends JobGeneric {
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         DataStream<String> events = env.addSource(new KafkaSource(parameterTool.getRequired("db.table"),
-            parameterTool.getProperties()).getSource()).name(KafkaSource.DESCRIPTION);
+            parameterTool.getProperties()).getSource())
+            .name(KafkaSource.DESCRIPTION);
 
         // write kafka events to standard out.
         events.print();

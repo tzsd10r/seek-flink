@@ -40,12 +40,11 @@ public class DbToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<Tuple2<LongWritable, DbInputRecord>> dbInputRecords =
+        DataStream<Tuple2<LongWritable, DbInputRecord>> dbRows =
             env.createInput(new JDBCHadoopSource(parameterTool).get())
             .name(JDBCHadoopSource.DESCRIPTION);
 
-        DataStream<BaseObject> mapped =
-            dbInputRecords
+        DataStream<BaseObject> mapped = dbRows
             .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, BaseObject>() {
                 private static final long serialVersionUID = 1L;
 
@@ -53,7 +52,7 @@ public class DbToHdfsJob extends JobGeneric {
                 public BaseObject map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
                     return tuple.f1.getEntryFind();
                 }
-            }).name("map db records");
+            }).name("Map db rows to objects");
 
         DataStream<String> jsonRecords = mapped.map(new JsonTextParser<BaseObject>())
             .name(JsonTextParser.DESCRIPTION);
@@ -75,9 +74,9 @@ public class DbToHdfsJob extends JobGeneric {
 
         String suffix = parameterTool.getRequired("db.table");
         countRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
-            .name(HdfsSink.DESCRIPTION);
+        .name(HdfsSink.DESCRIPTION);
 
-        env.execute("Queries the DB and drops results onto Filesystem");
+        env.execute("Queries the DB and drops results onto the Filesystem");
     }
 
     /**

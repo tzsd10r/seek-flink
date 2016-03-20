@@ -13,7 +13,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.CountRecords;
 import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.KafkaSink;

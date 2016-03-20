@@ -43,8 +43,6 @@ public class DBImportIssnlJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        // ConfigConstants.AKKA_FRAMESIZE, 20000000
-
         /*
          * Flink's program compiler needs to infer the data types of the data items which are returned
          * by an InputFormat. If this information cannot be automatically inferred, it is necessary to
@@ -92,6 +90,6 @@ public class DBImportIssnlJob extends JobGeneric {
         records.writeAsText(path + "/entry-find.txt", WriteMode.OVERWRITE)
         .name("filesystem sink");
 
-        env.execute("Fetching Data from Database");
+        env.execute("Fetc data from database and store on the Filesystem");
     }
 }

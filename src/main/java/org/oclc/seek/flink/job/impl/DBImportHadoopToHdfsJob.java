@@ -46,6 +46,6 @@ public class DBImportHadoopToHdfsJob extends JobGeneric {
         jsonRecords.writeAsText(path + "/entry-find.txt", WriteMode.OVERWRITE)
         .name("filesystem sink");
 
-        env.execute("Fetch data from database and store on HDFS");
+        env.execute("Fetch data from database and store on the Filesystem");
     }
 }
