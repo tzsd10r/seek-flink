@@ -13,7 +13,7 @@ import java.util.Properties;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
-import org.oclc.seek.flink.function.StringSerializerSchema;
+import org.oclc.seek.flink.serializer.StringSerializerSchema;
 
 /**
  *

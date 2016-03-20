@@ -17,8 +17,6 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.google.gson.Gson;
-
 /**
  *
  */

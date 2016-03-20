@@ -9,6 +9,7 @@
 package org.oclc.seek.flink.sink;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.flink.configuration.Configuration;
@@ -33,30 +34,19 @@ public class SolrSink<T> extends RichSinkFunction<T> {
      */
     private transient CloudSolrClient solrClient;
 
+    /**
+     * Property that represents the collection
+     */
     public static final String COLLECTION = "solr.collection";
+    /**
+     * Property that represents the zookeeper hosts.
+     */
     public static final String ZKHOSTS = "solr.zookeeper.connect";
 
     /**
      * Concise description of what this class does.
      */
     public static String DESCRIPTION = "Writes documents to Solr collection.";
-
-    // /**
-    // * @param solrConfig
-    // * @return an instance of {@link SolrSink}
-    // */
-    // public SolrSink<T> build(final Map<String, String> solrConfig) {
-    // return new SolrSink<T>(solrConfig);
-    // }
-
-    // /**
-    // * @param zkHosts
-    // * @param collection
-    // * @return an instance of {@link SolrSink}
-    // */
-    // public SolrSink<T> build(final String zkHosts, final String collection) {
-    // return new SolrSink<T>(zkHosts, collection);
-    // }
 
     /**
      * @param solrConfig
@@ -93,7 +83,7 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     /**
      * @param value
      * @param name
-     * @return the same instance parameter to be checked... if not null
+     * @return the same object received as argument... if not null
      */
     public static <OBJ> OBJ isValid(final OBJ value, final String name) {
         return Preconditions.checkNotNull(value, name + " is not set");
@@ -108,13 +98,16 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     }
 
     @Override
-    public void invoke(final T document) throws Exception {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Emitting data into Solr: {}", document);
+    public void invoke(final T obj) throws Exception {
+        if (obj instanceof Iterator<?>) {
+            solrClient.addBeans((Iterator<?>) obj);
+        } else {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Emitting data into Solr: {}", obj);
+            }
+            solrClient.addBean(obj);
         }
 
-        solrClient.addBean(document);
-        // solrClient.addBean(document, 500);
     }
 
     @Override
@@ -126,14 +119,4 @@ public class SolrSink<T> extends RichSinkFunction<T> {
         // make sure we propagate pending errors
         // checkErroneous();
     }
-
-    // /**
-    // * @param config
-    // * @return
-    // */
-    // private DefaultHttpClient client() {
-    // DefaultHttpClient httpClient = HttpClientFactory.createHttpClient();
-    // new HttpClientConfigurer().configure(httpClient, new ModifiableSolrParams());
-    // return httpClient;
-    // }
 }

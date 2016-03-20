@@ -11,8 +11,8 @@ package org.oclc.seek.flink.job.impl;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
-import org.oclc.seek.flink.function.CountRecords;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.mapper.CountRecords;
 import org.oclc.seek.flink.sink.KafkaSink;
 
 /**

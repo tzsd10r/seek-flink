@@ -22,19 +22,27 @@ import org.oclc.seek.flink.record.DbInputRecord;
  *
  */
 public class JDBCHadoopSource {
+    private ParameterTool parameterTool;
+
     /**
      * Concise description of what this class represents.
      */
     public static final String DESCRIPTION = "Extracts records from database using Map/Reduce.";
 
     /**
-     * @param dbInputRecord
-     * @param clazz
+     * Constructor with parameter tool properties.
+     *
      * @param parameterTool
+     */
+    public JDBCHadoopSource(final ParameterTool parameterTool) {
+        this.parameterTool = parameterTool;
+    }
+
+    /**
      * @return an instance of {@link HadoopInputFormat}
      * @throws IOException
      */
-    public HadoopInputFormat<LongWritable, DbInputRecord> build(final ParameterTool parameterTool) throws IOException {
+    public HadoopInputFormat<LongWritable, DbInputRecord> get() throws IOException {
         JobConf conf = new JobConf();
 
         DBConfiguration.configureDB(conf,
@@ -54,7 +62,7 @@ public class JDBCHadoopSource {
 
         HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
             new HadoopInputFormat<LongWritable, DbInputRecord>(
-                new DBInputFormat(), LongWritable.class, DbInputRecord.class, conf);
+                new DBInputFormat<DbInputRecord>(), LongWritable.class, DbInputRecord.class, conf);
 
         // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
         // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");

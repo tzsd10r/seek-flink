@@ -32,13 +32,6 @@ public class DbInputRecord extends GenericWritable {
         entryFind = new EntryFindRowMapper().mapRow(rs, count.incrementAndGet());
     }
 
-    // /**
-    // * @return
-    // */
-    // public String toJson() {
-    // return entryFind.toJson();
-    // }
-
     /**
      * @return
      */

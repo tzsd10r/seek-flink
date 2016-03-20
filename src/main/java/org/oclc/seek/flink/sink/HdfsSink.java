@@ -25,14 +25,14 @@ public class HdfsSink {
      */
     public static final String DESCRIPTION = "Writes text to HDFS.";
     /**
-     * Generic property variable that represents the topic name
+     * Generic property variable that represents the directory path
      */
     public static String DIR = "fs.sink.dir";
 
     private RollingSink<String> sink;
 
     /**
-     * Constructor that makes use of a suffix when one is provided, to build the topic name.
+     * Constructor that makes use of a suffix when one is provided, to build the directory path.
      *
      * @param props
      * @param suffix
@@ -43,7 +43,7 @@ public class HdfsSink {
 
     /**
      * Constructor that only takes the properties.
-     * A generic topic name will be used.
+     * A generic directory path name will be used.
      *
      * @param path
      */

@@ -8,7 +8,7 @@
  *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
  *
  ******************************************************************************************************************/
-package org.oclc.seek.flink.function;
+package org.oclc.seek.flink.mapper;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichMapFunction;

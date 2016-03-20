@@ -10,9 +10,9 @@ package org.oclc.seek.flink.job.impl;
 
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.oclc.seek.flink.function.DBFetcherCallBack;
-import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.mapper.DBFetcherCallBack;
+import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.QueryGeneratorSource;

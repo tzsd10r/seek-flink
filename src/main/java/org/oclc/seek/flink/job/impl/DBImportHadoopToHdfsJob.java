@@ -13,8 +13,8 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.hadoop.io.LongWritable;
-import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
 
@@ -35,7 +35,7 @@ public class DBImportHadoopToHdfsJob extends JobGeneric {
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         DataSet<Tuple2<LongWritable, DbInputRecord>> records =
-            env.createInput(new JDBCHadoopSource().build(parameterTool))
+            env.createInput(new JDBCHadoopSource(parameterTool).get())
             .name(JDBCHadoopSource.DESCRIPTION);
 
         DataSet<String> jsonRecords = records.map(new JsonTextParser<Tuple2<LongWritable, DbInputRecord>>())

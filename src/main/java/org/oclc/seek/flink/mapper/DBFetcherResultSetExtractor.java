@@ -8,7 +8,7 @@
  *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
  *
  ******************************************************************************************************************/
-package org.oclc.seek.flink.function;
+package org.oclc.seek.flink.mapper;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -69,6 +69,7 @@ public class DBFetcherResultSetExtractor extends RichFlatMapFunction<String, Ent
                 ps.getConnection().prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY,
                     ResultSet.CONCUR_READ_ONLY);
                 ps.setFetchSize(FETCH_SIZE);
+                ps.setQueryTimeout(600);
             }
         }, new ResultSetExtractor<Integer>() {
             @Override

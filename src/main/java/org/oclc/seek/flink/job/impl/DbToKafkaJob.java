@@ -12,9 +12,9 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
-import org.oclc.seek.flink.function.CountRecords;
-import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.mapper.CountRecords;
+import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
@@ -45,9 +45,9 @@ public class DbToKafkaJob extends JobGeneric {
         env.getConfig().setGlobalJobParameters(parameterTool);
 
         DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
-            env.createInput(new JDBCHadoopSource().build(parameterTool))
-            .map(new CountRecords<Tuple2<LongWritable, DbInputRecord>>())
-                .name(JDBCHadoopSource.DESCRIPTION);
+            env.createInput(new JDBCHadoopSource(parameterTool).get())
+                // .map(new CountRecords<Tuple2<LongWritable, DbInputRecord>>())
+            .name(JDBCHadoopSource.DESCRIPTION);
 
         DataStream<String> jsonRecords = rawRecords.map(new JsonTextParser<Tuple2<LongWritable, DbInputRecord>>())
             .name(JsonTextParser.DESCRIPTION);

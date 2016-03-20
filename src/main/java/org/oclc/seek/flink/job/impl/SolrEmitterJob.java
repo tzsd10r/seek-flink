@@ -15,8 +15,8 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.builder.DbInputRecordBuilder;
-import org.oclc.seek.flink.function.JsonTextParser;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.SolrSink;
 
