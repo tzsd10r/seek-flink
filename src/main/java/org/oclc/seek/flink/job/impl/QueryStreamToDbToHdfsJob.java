@@ -15,7 +15,7 @@ import org.oclc.seek.flink.mapper.DBFetcherCallBack;
 import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.sink.HdfsSink;
-import org.oclc.seek.flink.source.QueryGeneratorSource;
+import org.oclc.seek.flink.source.QueryLikeSource;
 
 /**
  * Here, you can start creating your execution plan for Flink.
@@ -57,8 +57,10 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<String> queries = env.addSource(new QueryGeneratorSource())
-            .name(QueryGeneratorSource.DESCRIPTION);
+        DataStream<String> queries = env.addSource(new QueryLikeSource())
+            .name(QueryLikeSource.DESCRIPTION);
+        // DataStream<String> queries = env.addSource(new QueryOffsetSource())
+        // .name(QueryOffsetSource.DESCRIPTION);
 
         /*
          * The rebalance() method enforces the even distribution over all parallel instances for the task that will

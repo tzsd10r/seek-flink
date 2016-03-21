@@ -32,7 +32,7 @@ import org.apache.flink.util.Collector;
  */
 public class ExampleJob {
 
-    public void complexIntegrationTest2() throws Exception {
+    public void run() throws Exception {
         // Testing POJO source, grouping by multiple fields and windowing with timestamp
         String expected1 = "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" +
             "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" +
@@ -238,6 +238,17 @@ public class ExampleJob {
         public void cancel() {
 
         }
+    }
+    
+    /**
+     * @param args
+     * @throws Exception
+     */
+    public static void main(final String[] args) throws Exception {
+        System.setProperty("environment", "test");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        ExampleJob job = new ExampleJob();
+        job.run();
     }
 
 }

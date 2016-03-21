@@ -15,14 +15,12 @@ import scala.collection.mutable.StringBuilder;
 /**
  *
  */
-public class QueryGeneratorSource implements SourceFunction<String> {
+public class QueryLikeSource implements SourceFunction<String> {
+    private static final long serialVersionUID = 1L;
     /**
      * Concise description of what this class represents.
      */
     public static final String DESCRIPTION = "Generator of SQL queries.";
-    private static final long serialVersionUID = 1L;
-    boolean running = true;
-    long i = 1;
 
     static final String[] hex = {
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"
@@ -42,7 +40,10 @@ public class QueryGeneratorSource implements SourceFunction<String> {
                 // value.append(a);
                 ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
                 // System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                Thread.sleep(100);
+                /*
+                 * Does this statement really make a difference???
+                 */
+                // Thread.sleep(100);
             }
             // }
             // }
@@ -51,6 +52,6 @@ public class QueryGeneratorSource implements SourceFunction<String> {
 
     @Override
     public void cancel() {
-        running = false;
+        // running = false;
     }
 }

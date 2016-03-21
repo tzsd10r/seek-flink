@@ -15,6 +15,7 @@ import java.util.Map;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.com.google.common.base.Preconditions;
 import org.apache.flink.shaded.com.google.common.collect.ImmutableMap;
+import org.apache.flink.shaded.com.google.common.collect.Iterators;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
@@ -28,7 +29,7 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     private final Logger LOGGER = LoggerFactory.getLogger(SolrSink.class);
     private static final long serialVersionUID = 1L;
 
-    private Map<String, String> solrConfig;
+    private Map<String, String> config;
     /**
      * Since {@link CloudSolrClient} isn't serializable we must qualify it as transient
      */
@@ -49,18 +50,17 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     public static String DESCRIPTION = "Writes documents to Solr collection.";
 
     /**
-     * @param solrConfig
+     * @param config
      */
-    public SolrSink(final Map<String, String> solrConfig) {
-        isValid(solrConfig, "solrConfig");
+    public SolrSink(final Map<String, String> config) {
+        isValid(config, "config");
 
-        this.solrConfig = solrConfig;
 
         // Create a local CloudSolrClient to ensure locally that we have required config values
         // Also... ensure we can connect and ping
         try {
-            CloudSolrClient client = new CloudSolrClient(solrConfig.get(ZKHOSTS));
-            client.setDefaultCollection(solrConfig.get(COLLECTION));
+            CloudSolrClient client = new CloudSolrClient(config.get(ZKHOSTS));
+            client.setDefaultCollection(config.get(COLLECTION));
             client.connect();
             client.ping();
             client.close();
@@ -69,6 +69,8 @@ public class SolrSink<T> extends RichSinkFunction<T> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        this.config = config;
     }
 
     /**
@@ -91,20 +93,21 @@ public class SolrSink<T> extends RichSinkFunction<T> {
 
     @Override
     public void open(final Configuration configuration) {
-        this.solrClient = new CloudSolrClient(solrConfig.get(ZKHOSTS));
-        solrClient.setDefaultCollection(solrConfig.get(COLLECTION));
+        this.solrClient = new CloudSolrClient(config.get(ZKHOSTS));
+        solrClient.setDefaultCollection(config.get(COLLECTION));
 
-        LOGGER.info("Starting Solr Client to index into collection... [{}]", solrConfig.get(COLLECTION));
+        LOGGER.info("Starting Solr Client to index into collection... [{}]", config.get(COLLECTION));
     }
 
     @Override
     public void invoke(final T obj) throws Exception {
-        if (obj instanceof Iterator<?>) {
-            solrClient.addBeans((Iterator<?>) obj);
+        if (obj instanceof Iterable<?>) {
+            Iterator<?> it = ((Iterable<?>) obj).iterator();
+            LOGGER.info("Pushing " + Iterators.size(it) + " docs into Solr for collection: [{}]",
+                config.get(COLLECTION));
+            solrClient.addBeans(it);
         } else {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Emitting data into Solr: {}", obj);
-            }
+            LOGGER.info("Pushing doc into Solr for collection: [{}] \n [{}] ", config.get(COLLECTION), obj);
             solrClient.addBean(obj);
         }
 

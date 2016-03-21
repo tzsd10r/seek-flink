@@ -28,7 +28,7 @@ public class DocumentParser extends RichMapFunction<String, KbwcEntryDocument> {
     /**
      * Concise description of what this class does.
      */
-    public static final String DESCRIPTION = "Transforms JSON text into the appropriate Object.";
+    public static final String DESCRIPTION = "Transforms JSON text into the appropriate Object";
     /**
      * The default JSON parser is Gson.
      * The only other option at the moment is JsonSlurper (Groovy utility)

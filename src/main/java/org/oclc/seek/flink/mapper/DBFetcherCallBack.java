@@ -65,7 +65,7 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
     @Override
     public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
         counter = 0;
-        System.out.println(query);
+        // System.out.println(query);
 
         PreparedStatementCallback<Integer> callback = new
             PreparedStatementCallback<Integer>() {
