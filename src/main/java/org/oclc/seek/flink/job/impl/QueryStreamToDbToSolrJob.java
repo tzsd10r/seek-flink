@@ -8,8 +8,6 @@
 
 package org.oclc.seek.flink.job.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
@@ -107,14 +105,14 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         /*
          * Is this rebalance REALLY important???
          */
-        DataStream<List<KbwcEntryDocument>> windowed = documents
-            .keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>())
-            .timeWindow(Time.seconds(30))
-            .apply(new SolrTimeWindow<KbwcEntryDocument, List<KbwcEntryDocument>, Long, TimeWindow>())
-            //.rebalance()
-            .name(SolrTimeWindow.DESCRIPTION);
+        // DataStream<KbwcEntryDocument> windowed = documents
+        documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>()).timeWindow(Time.seconds(30))
+            .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Long, TimeWindow>())
+            // .rebalance()
+            // .name(SolrTimeWindow.DESCRIPTION);
 
-        windowed.addSink(new SolrSink<List<KbwcEntryDocument>>(configMap)).name(SolrSink.DESCRIPTION);;
+            // windowed
+            .addSink(new SolrSink<KbwcEntryDocument>(configMap)).name(SolrSink.DESCRIPTION);;
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
     }
@@ -156,7 +154,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
 
         @Override
         public Long getKey(final KbwcEntryDocument document) throws Exception {
-            //return document.getCollection();
+            // return document.getCollection();
             return document.getOwnerInstitution();
         }
     }
@@ -168,7 +166,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <WINDOW>
      */
     public class SolrTimeWindow<IN, OUT, KEY, WINDOW> implements
-        WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, Long, TimeWindow> {
+        WindowFunction<KbwcEntryDocument, KbwcEntryDocument, Long, TimeWindow> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class does.
@@ -177,14 +175,14 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
 
         @Override
         public void apply(final Long key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
-            final Collector<List<KbwcEntryDocument>> collector) throws Exception {
+            final Collector<KbwcEntryDocument> collector) throws Exception {
 
-            List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
+            // List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
             for (KbwcEntryDocument document : values) {
-                list.add(document);
+                // list.add(document);
+                collector.collect(document);
             }
-            
-            collector.collect(list);
+
         }
     }
 
