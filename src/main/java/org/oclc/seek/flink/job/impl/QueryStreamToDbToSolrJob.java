@@ -109,9 +109,9 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          */
         DataStream<List<KbwcEntryDocument>> windowed = documents
             .keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>())
-            .timeWindow(Time.milliseconds(1000))
+            .timeWindow(Time.seconds(30))
             .apply(new SolrTimeWindow<KbwcEntryDocument, List<KbwcEntryDocument>, Long, TimeWindow>())
-            .rebalance()
+            //.rebalance()
             .name(SolrTimeWindow.DESCRIPTION);
 
         windowed.addSink(new SolrSink<List<KbwcEntryDocument>>(configMap)).name(SolrSink.DESCRIPTION);;
