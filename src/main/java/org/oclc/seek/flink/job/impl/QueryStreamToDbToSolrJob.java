@@ -83,7 +83,8 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         /*
          * Is this rebalance REALLY important???
          */
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser()).rebalance()
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
+            //.rebalance()
             .name(DocumentParser.DESCRIPTION);
 
         /*
@@ -105,14 +106,12 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         /*
          * Is this rebalance REALLY important???
          */
-        // DataStream<KbwcEntryDocument> windowed = documents
-        documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Object>()).timeWindow(Time.seconds(1))
-            .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow>())
-            // .rebalance()
-            // .name(SolrTimeWindow.DESCRIPTION);
+        DataStream<KbwcEntryDocument> windowed = documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Object>())
+            .timeWindow(Time.seconds(1))
+            .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow>()).rebalance()
+            .name(SolrTimeWindow.DESCRIPTION);
 
-            // windowed
-            .addSink(new SolrSink<KbwcEntryDocument>(configMap)).name(SolrSink.DESCRIPTION);;
+        windowed.addSink(new SolrSink<KbwcEntryDocument>(configMap)).name(SolrSink.DESCRIPTION);;
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
     }
@@ -155,7 +154,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         @Override
         public Object getKey(final KbwcEntryDocument document) throws Exception {
             return document.getCollection();
-            //return document.getOwnerInstitution();
+            // return document.getOwnerInstitution();
         }
     }
 
