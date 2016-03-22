@@ -84,7 +84,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          * Is this rebalance REALLY important???
          */
         DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
-            //.rebalance()
+            .rebalance()
             .name(DocumentParser.DESCRIPTION);
 
         /*
