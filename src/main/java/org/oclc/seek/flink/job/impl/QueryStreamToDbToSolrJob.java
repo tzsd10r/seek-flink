@@ -18,7 +18,6 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.com.google.common.collect.ImmutableMap;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -74,32 +73,48 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
 
         String zkHosts = parameterTool.getRequired(SolrSink.ZKHOSTS);
         String collection = parameterTool.getRequired(SolrSink.COLLECTION);
-        Map<String, String> configMap = ImmutableMap
-            .of(SolrSink.ZKHOSTS, zkHosts, SolrSink.COLLECTION, collection);
+        Map<String, String> configMap = ImmutableMap.of(SolrSink.ZKHOSTS, zkHosts, SolrSink.COLLECTION, collection);
 
-        DataStream<String> queries = env.addSource(new QueryLikeSource())
-            .name(QueryLikeSource.DESCRIPTION);
+        DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
 
-        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
-            .rebalance()
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack()).rebalance()
             .name(DBFetcherCallBack.DESCRIPTION);
 
-        DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
-            .name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>()).name(JsonTextParser.DESCRIPTION);
 
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
+        /*
+         * Is this rebalance REALLY important???
+         */
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser()).rebalance()
             .name(DocumentParser.DESCRIPTION);
 
-        KeyedStream<KbwcEntryDocument, String> keyed =
-            documents.keyBy(new SolrKeySelector<KbwcEntryDocument, String>());
+        /*
+         * Windows can be defined on already partitioned KeyedStreams. Windows group the data in each key according to
+         * some characteristic (e.g., the data that arrived within the last 5 seconds).
+         */
+        /*
+         * Windows group all the stream events according to some
+         * characteristic (e.g., the data that arrived within the last 5 seconds).
+         * WARNING: This is in many cases a non-parallel transformation. All records will be gathered in one task for
+         * the windowAll operator.
+         */
+        /*
+         * Windows can be defined on regular (non-keyed) data streams using the windowAll transformation and grouping
+         * all the stream events according to some characteristic (e.g., the data that arrived within the last 5
+         * seconds). These windowed data streams have all the capabilities of keyed windowed data streams, BUT are
+         * evaluated at a SINGLE TASK (and hence at a single computing node).
+         */
+        /*
+         * Is this rebalance REALLY important???
+         */
+        DataStream<List<KbwcEntryDocument>> windowed = documents
+            .keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>())
+            .timeWindow(Time.milliseconds(1000))
+            .apply(new SolrTimeWindow<KbwcEntryDocument, List<KbwcEntryDocument>, Integer, TimeWindow>())
+            .rebalance()
+            .name(SolrTimeWindow.DESCRIPTION);
 
-        // DataStream<KbwcEntryDocument> docs = keyed.map(new RecordCounter())
-        // .name(RecordCounter.DESCRIPTION);
-
-        keyed.timeWindow(Time.milliseconds(5000))
-        .apply(new SolrTimeWindow<KbwcEntryDocument, List<KbwcEntryDocument>, String, TimeWindow>())
-        .addSink(new SolrSink<List<KbwcEntryDocument>>(configMap))
-        .name(SolrSink.DESCRIPTION);;
+        windowed.addSink(new SolrSink<List<KbwcEntryDocument>>(configMap)).name(SolrSink.DESCRIPTION);;
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
     }
@@ -132,16 +147,18 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <IN>
      * @param <OUT>
      */
-    public class SolrKeySelector<IN, OUT> implements KeySelector<KbwcEntryDocument, String> {
+    public class SolrKeySelector<IN, OUT> implements KeySelector<KbwcEntryDocument, OUT> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class does.
          */
         public static final String DESCRIPTION = "Selects a key from the the document";
 
+        @SuppressWarnings("unchecked")
         @Override
-        public String getKey(final KbwcEntryDocument document) throws Exception {
-            return document.getId();
+        public OUT getKey(final KbwcEntryDocument document) throws Exception {
+            //return document.getCollection();
+            return (OUT) document.getOwnerInstitution();
         }
     }
 
@@ -152,18 +169,22 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <WINDOW>
      */
     public class SolrTimeWindow<IN, OUT, KEY, WINDOW> implements
-    WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, String, TimeWindow> {
+        WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, Integer, TimeWindow> {
         private static final long serialVersionUID = 1L;
+        /**
+         * Concise description of what this class does.
+         */
+        public static final String DESCRIPTION = "Windows elements into a window, based on a key";
 
         @Override
-        public void apply(final String key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
+        public void apply(final Integer key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
             final Collector<List<KbwcEntryDocument>> collector) throws Exception {
 
             List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
             for (KbwcEntryDocument document : values) {
                 list.add(document);
             }
-            System.out.println(list.size());
+            
             collector.collect(list);
         }
     }

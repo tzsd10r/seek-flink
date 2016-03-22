@@ -1086,6 +1086,10 @@ public class KbwcEntryDocument implements Serializable {
     public void putHoldingsInstidBySet(final TreeSet<String> holdingInstId) {
         setHoldingsInstid(StringUtils.join(holdingInstId, " "));
     }
+    
+    public String getCollection() {
+        return collection;
+    }
 
     /**
      * get string

@@ -26,13 +26,21 @@ import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
+import org.oclc.seek.flink.job.JobGeneric;
 
 /**
  *
  */
-public class ExampleJob {
+public class ExampleJob extends JobGeneric {
+    private static final long serialVersionUID = 1L;
 
-    public void run() throws Exception {
+    @Override
+    public void init() {
+        super.init();
+    }
+    
+    @Override
+    public void execute(final StreamExecutionEnvironment env) throws Exception {
         // Testing POJO source, grouping by multiple fields and windowing with timestamp
         String expected1 = "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" +
             "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" + "water_melon-b\n" +
@@ -64,7 +72,7 @@ public class ExampleJob {
             new Tuple5<>(16, "apple", 'c', 0.1, false),
             new Tuple5<>(17, "peach", 'd', 1.0, true));
 
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        //StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // env.getConfig().enableTimestamps();
 
         DataStreamSource<Tuple5<Integer, String, Character, Double, Boolean>> sourceStream21 =
@@ -72,14 +80,14 @@ public class ExampleJob {
 
         DataStream<OuterPojo> sourceStream22 = env.addSource(new PojoSource());
 
-        sourceStream21.assignTimestamps(new MyTimestampExtractor())
+        sourceStream21//.assignTimestamps(new MyTimestampExtractor())
         .keyBy(2, 2)
-        .timeWindow(Time.of(10, TimeUnit.MILLISECONDS), Time.of(4, TimeUnit.MILLISECONDS))
+        .timeWindow(Time.of(100, TimeUnit.MILLISECONDS), Time.of(50, TimeUnit.MILLISECONDS))
         .maxBy(3)
         .map(new MyMapFunction2()).flatMap(new MyFlatMapFunction())
         .connect(sourceStream22)
         .map(new MyCoMapFunction())
-        .writeAsText("", FileSystem.WriteMode.OVERWRITE);
+        .writeAsText(parameterTool.getRequired("fs.folder") + "/example.txt", FileSystem.WriteMode.OVERWRITE);
 
         env.execute();
     }
@@ -245,10 +253,12 @@ public class ExampleJob {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        System.setProperty("environment", "test");
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        System.setProperty("environment", "local");
+        System.setProperty("json.text.parser", "gson");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         ExampleJob job = new ExampleJob();
-        job.run();
+        job.init();
+        job.execute(env);
     }
 
 }

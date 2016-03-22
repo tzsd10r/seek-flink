@@ -47,14 +47,13 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     /**
      * Concise description of what this class does.
      */
-    public static String DESCRIPTION = "Writes documents to Solr collection.";
+    public static String DESCRIPTION = "Writes documents to a Solr collection";
 
     /**
      * @param config
      */
     public SolrSink(final Map<String, String> config) {
         isValid(config, "config");
-
 
         // Create a local CloudSolrClient to ensure locally that we have required config values
         // Also... ensure we can connect and ping
@@ -78,8 +77,7 @@ public class SolrSink<T> extends RichSinkFunction<T> {
      * @param collection
      */
     public SolrSink(final String zkHosts, final String collection) {
-        this(ImmutableMap
-            .of(ZKHOSTS, isValid(zkHosts, "zkHosts"), COLLECTION, isValid(collection, "collection")));
+        this(ImmutableMap.of(ZKHOSTS, isValid(zkHosts, "zkHosts"), COLLECTION, isValid(collection, "collection")));
     }
 
     /**
@@ -103,11 +101,15 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     public void invoke(final T obj) throws Exception {
         if (obj instanceof Iterable<?>) {
             Iterator<?> it = ((Iterable<?>) obj).iterator();
-            LOGGER.info("Pushing " + Iterators.size(it) + " docs into Solr for collection: [{}]",
-                config.get(COLLECTION));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Pushing " + Iterators.size(it) + " docs into Solr for collection: [{}]",
+                    config.get(COLLECTION));
+            }
             solrClient.addBeans(it);
         } else {
-            LOGGER.info("Pushing doc into Solr for collection: [{}] \n [{}] ", config.get(COLLECTION), obj);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Pushing doc into Solr for collection: [{}] \n [{}] ", config.get(COLLECTION), obj);
+            }
             solrClient.addBean(obj);
         }
 
