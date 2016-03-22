@@ -8,6 +8,8 @@
 
 package org.oclc.seek.flink.job.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
@@ -83,8 +85,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         /*
          * Is this rebalance REALLY important???
          */
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
-            .rebalance()
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser()).rebalance()
             .name(DocumentParser.DESCRIPTION);
 
         /*
@@ -106,12 +107,22 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         /*
          * Is this rebalance REALLY important???
          */
-        DataStream<KbwcEntryDocument> windowed = documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Object>())
-            .timeWindow(Time.seconds(1))
-            .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow>()).rebalance()
-            .name(SolrTimeWindow.DESCRIPTION);
 
-        windowed.addSink(new SolrSink<KbwcEntryDocument>(configMap)).name(SolrSink.DESCRIPTION);;
+        if (parameterTool.getRequired("list").equalsIgnoreCase("Y")) {
+            DataStream<List<KbwcEntryDocument>> windowed = documents
+                .keyBy(new SolrKeySelector<KbwcEntryDocument, Object>()).timeWindow(Time.seconds(1))
+                .apply(new SolrTimeWindowList<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow>())
+                .rebalance().name(SolrTimeWindowList.DESCRIPTION);
+
+            windowed.addSink(new SolrSink<List<KbwcEntryDocument>>(configMap)).name(SolrSink.DESCRIPTION);;
+        } else {
+            DataStream<KbwcEntryDocument> windowed = documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Object>())
+                .timeWindow(Time.seconds(1))
+                .apply(new SolrTimeWindowObject<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow>())
+                .rebalance().name(SolrTimeWindowList.DESCRIPTION);
+
+            windowed.addSink(new SolrSink<KbwcEntryDocument>(configMap)).name(SolrSink.DESCRIPTION);;
+        }
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
     }
@@ -154,7 +165,6 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         @Override
         public Object getKey(final KbwcEntryDocument document) throws Exception {
             return document.getCollection();
-            // return document.getOwnerInstitution();
         }
     }
 
@@ -164,7 +174,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <KEY>
      * @param <WINDOW>
      */
-    public class SolrTimeWindow<IN, OUT, KEY, WINDOW> implements
+    public class SolrTimeWindowObject<IN, OUT, KEY, WINDOW> implements
         WindowFunction<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow> {
         private static final long serialVersionUID = 1L;
         /**
@@ -176,12 +186,34 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         public void apply(final Object key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
             final Collector<KbwcEntryDocument> collector) throws Exception {
 
-            // List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
             for (KbwcEntryDocument document : values) {
-                // list.add(document);
                 collector.collect(document);
             }
+        }
+    }
+    /**
+     * @param <IN>
+     * @param <OUT>
+     * @param <KEY>
+     * @param <WINDOW>
+     */
+    public class SolrTimeWindowList<IN, OUT, KEY, WINDOW> implements
+        WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow> {
+        private static final long serialVersionUID = 1L;
+        /**
+         * Concise description of what this class does.
+         */
+        public static final String DESCRIPTION = "Windows elements into a window, based on a key";
 
+        @Override
+        public void apply(final Object key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
+            final Collector<List<KbwcEntryDocument>> collector) throws Exception {
+
+            List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
+            for (KbwcEntryDocument document : values) {
+                list.add(document);
+            }
+            collector.collect(list);
         }
     }
 
