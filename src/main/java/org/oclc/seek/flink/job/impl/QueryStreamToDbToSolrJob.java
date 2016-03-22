@@ -110,7 +110,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         DataStream<List<KbwcEntryDocument>> windowed = documents
             .keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>())
             .timeWindow(Time.milliseconds(1000))
-            .apply(new SolrTimeWindow<KbwcEntryDocument, List<KbwcEntryDocument>, Integer, TimeWindow>())
+            .apply(new SolrTimeWindow<KbwcEntryDocument, List<KbwcEntryDocument>, Long, TimeWindow>())
             .rebalance()
             .name(SolrTimeWindow.DESCRIPTION);
 
@@ -147,18 +147,17 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <IN>
      * @param <OUT>
      */
-    public class SolrKeySelector<IN, OUT> implements KeySelector<KbwcEntryDocument, OUT> {
+    public class SolrKeySelector<IN, OUT> implements KeySelector<KbwcEntryDocument, Long> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class does.
          */
         public static final String DESCRIPTION = "Selects a key from the the document";
 
-        @SuppressWarnings("unchecked")
         @Override
-        public OUT getKey(final KbwcEntryDocument document) throws Exception {
+        public Long getKey(final KbwcEntryDocument document) throws Exception {
             //return document.getCollection();
-            return (OUT) document.getOwnerInstitution();
+            return document.getOwnerInstitution();
         }
     }
 
@@ -169,7 +168,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <WINDOW>
      */
     public class SolrTimeWindow<IN, OUT, KEY, WINDOW> implements
-        WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, Integer, TimeWindow> {
+        WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, Long, TimeWindow> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class does.
@@ -177,7 +176,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         public static final String DESCRIPTION = "Windows elements into a window, based on a key";
 
         @Override
-        public void apply(final Integer key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
+        public void apply(final Long key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
             final Collector<List<KbwcEntryDocument>> collector) throws Exception {
 
             List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
