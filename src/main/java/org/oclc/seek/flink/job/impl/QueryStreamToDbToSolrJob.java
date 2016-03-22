@@ -106,8 +106,8 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          * Is this rebalance REALLY important???
          */
         // DataStream<KbwcEntryDocument> windowed = documents
-        documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>()).timeWindow(Time.seconds(25))
-            .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Long, TimeWindow>())
+        documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Object>()).timeWindow(Time.seconds(1))
+            .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow>())
             // .rebalance()
             // .name(SolrTimeWindow.DESCRIPTION);
 
@@ -145,7 +145,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <IN>
      * @param <OUT>
      */
-    public class SolrKeySelector<IN, OUT> implements KeySelector<KbwcEntryDocument, Long> {
+    public class SolrKeySelector<IN, OUT> implements KeySelector<KbwcEntryDocument, Object> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class does.
@@ -153,9 +153,9 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         public static final String DESCRIPTION = "Selects a key from the the document";
 
         @Override
-        public Long getKey(final KbwcEntryDocument document) throws Exception {
-            // return document.getCollection();
-            return document.getOwnerInstitution();
+        public Object getKey(final KbwcEntryDocument document) throws Exception {
+            return document.getCollection();
+            //return document.getOwnerInstitution();
         }
     }
 
@@ -166,7 +166,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <WINDOW>
      */
     public class SolrTimeWindow<IN, OUT, KEY, WINDOW> implements
-        WindowFunction<KbwcEntryDocument, KbwcEntryDocument, Long, TimeWindow> {
+        WindowFunction<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class does.
@@ -174,7 +174,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         public static final String DESCRIPTION = "Windows elements into a window, based on a key";
 
         @Override
-        public void apply(final Long key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
+        public void apply(final Object key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
             final Collector<KbwcEntryDocument> collector) throws Exception {
 
             // List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
