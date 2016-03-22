@@ -106,7 +106,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          * Is this rebalance REALLY important???
          */
         // DataStream<KbwcEntryDocument> windowed = documents
-        documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>()).timeWindow(Time.seconds(30))
+        documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Integer>()).timeWindow(Time.seconds(25))
             .apply(new SolrTimeWindow<KbwcEntryDocument, KbwcEntryDocument, Long, TimeWindow>())
             // .rebalance()
             // .name(SolrTimeWindow.DESCRIPTION);
