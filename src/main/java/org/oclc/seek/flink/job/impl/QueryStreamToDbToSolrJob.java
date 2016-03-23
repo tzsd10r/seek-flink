@@ -19,6 +19,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.com.google.common.collect.ImmutableMap;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
@@ -77,13 +78,20 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
 
         DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
 
-        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack()).rebalance()
+        /*
+         * Is this rebalance REALLY important here??
+         */
+        DataStream<EntryFind> records = queries
+            .flatMap(new DBFetcherCallBack())
+            //.assignTimestamps(new ReadingsTimestampAssigner())
+            .rebalance()
             .name(DBFetcherCallBack.DESCRIPTION);
 
-        DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>()).name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = records
+            .map(new JsonTextParser<EntryFind>()).name(JsonTextParser.DESCRIPTION);
 
         /*
-         * Is this rebalance REALLY important???
+         * Is this rebalance REALLY important here???
          */
         DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser()).rebalance()
             .name(DocumentParser.DESCRIPTION);
@@ -105,23 +113,23 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          * evaluated at a SINGLE TASK (and hence at a single computing node).
          */
         /*
-         * Is this rebalance REALLY important???
+         * Is this rebalance REALLY important??? YES. The rebalance distributes the work load more appropriatedly across
+         * the workers emitting to Solr.
+         * 
+         * What is the best time window? The smaller the window... the better... in this case, 1 second is good, which
+         * pushes about 30K elements at a time... and the total time is about 15-20 mins less when compared to the
+         * 2 second window
          */
 
-        if (parameterTool.getRequired("list").equalsIgnoreCase("Y")) {
+        if (parameterTool.getRequired("with").equalsIgnoreCase("1")) {
             DataStream<List<KbwcEntryDocument>> windowed = documents
                 .keyBy(new SolrKeySelector<KbwcEntryDocument, Object>()).timeWindow(Time.seconds(1))
                 .apply(new SolrTimeWindowList<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow>())
                 .rebalance().name(SolrTimeWindowList.DESCRIPTION);
 
-            windowed.addSink(new SolrSink<List<KbwcEntryDocument>>(configMap)).name(SolrSink.DESCRIPTION);;
+            windowed.map(new RecordCounter()).addSink(new SolrSink<List<KbwcEntryDocument>>(configMap))
+                .name(SolrSink.DESCRIPTION);
         } else {
-            DataStream<KbwcEntryDocument> windowed = documents.keyBy(new SolrKeySelector<KbwcEntryDocument, Object>())
-                .timeWindow(Time.seconds(1))
-                .apply(new SolrTimeWindowObject<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow>())
-                .rebalance().name(SolrTimeWindowList.DESCRIPTION);
-
-            windowed.addSink(new SolrSink<KbwcEntryDocument>(configMap)).name(SolrSink.DESCRIPTION);;
         }
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
@@ -130,12 +138,12 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
     /**
      *
      */
-    public class RecordCounter extends RichMapFunction<KbwcEntryDocument, KbwcEntryDocument> {
+    public class RecordCounter extends RichMapFunction<List<KbwcEntryDocument>, List<KbwcEntryDocument>> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class represents.
          */
-        public static final String DESCRIPTION = "Counts records";
+        public static final String DESCRIPTION = "Counts elements being processed";
         private LongCounter recordCount = new LongCounter();
 
         @Override
@@ -145,9 +153,9 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         }
 
         @Override
-        public KbwcEntryDocument map(final KbwcEntryDocument obj) throws Exception {
-            recordCount.add(1L);
-            return obj;
+        public List<KbwcEntryDocument> map(final List<KbwcEntryDocument> list) throws Exception {
+            recordCount.add(list.size());
+            return list;
         }
     }
 
@@ -174,29 +182,6 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      * @param <KEY>
      * @param <WINDOW>
      */
-    public class SolrTimeWindowObject<IN, OUT, KEY, WINDOW> implements
-        WindowFunction<KbwcEntryDocument, KbwcEntryDocument, Object, TimeWindow> {
-        private static final long serialVersionUID = 1L;
-        /**
-         * Concise description of what this class does.
-         */
-        public static final String DESCRIPTION = "Windows elements into a window, based on a key";
-
-        @Override
-        public void apply(final Object key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
-            final Collector<KbwcEntryDocument> collector) throws Exception {
-
-            for (KbwcEntryDocument document : values) {
-                collector.collect(document);
-            }
-        }
-    }
-    /**
-     * @param <IN>
-     * @param <OUT>
-     * @param <KEY>
-     * @param <WINDOW>
-     */
     public class SolrTimeWindowList<IN, OUT, KEY, WINDOW> implements
         WindowFunction<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow> {
         private static final long serialVersionUID = 1L;
@@ -209,11 +194,39 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         public void apply(final Object key, final TimeWindow window, final Iterable<KbwcEntryDocument> values,
             final Collector<List<KbwcEntryDocument>> collector) throws Exception {
 
+            /*
+             * Batching documents as an List... this is way faster than actually collecting each document at a time.
+             */
             List<KbwcEntryDocument> list = new ArrayList<KbwcEntryDocument>();
             for (KbwcEntryDocument document : values) {
                 list.add(document);
             }
             collector.collect(list);
+        }
+    }
+    
+    public  class ReadingsTimestampAssigner implements TimestampExtractor<EntryFind> {
+        private static final long serialVersionUID = 1L;
+        /**
+         * in milliseconds
+         */
+        private static final long MAX_DELAY_MS = 12000;
+        private long maxTimestamp;
+        
+        @Override
+        public long extractTimestamp(EntryFind element, long currentTimestamp) {
+            maxTimestamp = Math.max(maxTimestamp, element.timestamp());
+            return element.timestamp();
+        }
+
+        @Override
+        public long extractWatermark(EntryFind element, long currentTimestamp) {
+            return Long.MIN_VALUE;
+        }
+
+        @Override
+        public long getCurrentWatermark() {
+            return maxTimestamp - MAX_DELAY_MS;
         }
     }
 

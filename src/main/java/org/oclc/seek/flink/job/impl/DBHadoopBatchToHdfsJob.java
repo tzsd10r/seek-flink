@@ -21,7 +21,7 @@ import org.oclc.seek.flink.source.JDBCHadoopSource;
 /**
  *
  */
-public class DBImportHadoopToHdfsJob extends JobGeneric {
+public class DBHadoopBatchToHdfsJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
 
     @Override

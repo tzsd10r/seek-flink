@@ -31,22 +31,12 @@ public class QueryLikeSource implements SourceFunction<String> {
         StringBuilder value;
         for (String h : hex) {
             for (String e : hex) {
-                // for (String x : hex) {
-                // for (String a : hex) {
                 value = new StringBuilder();
                 value.append(h);
                 value.append(e);
-                // value.append(x);
-                // value.append(a);
                 ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
                 // System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
-                /*
-                 * Does this statement really make a difference???
-                 */
-                // Thread.sleep(100);
             }
-            // }
-            // }
         }
     }
 

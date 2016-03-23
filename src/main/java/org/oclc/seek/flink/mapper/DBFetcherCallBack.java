@@ -50,14 +50,29 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
 
-        ParameterTool parameters =
-            (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
 
+        // String driver = parameters.getRequired("db.driver");
         String url = parameters.getRequired("db.url");
         String user = parameters.getRequired("db.user");
         String password = parameters.getRequired("db.password");
 
+        /*
+         * If instantiated BasicDataSource... the sessions are kept alive and don't go away.
+         * Need to figure what to do in order to have sessions closed.
+         */
+
+        // BasicDataSource datasource = new BasicDataSource();
+        // datasource.setDriverClassName(driver);
+        // datasource.setUsername(user);
+        // datasource.setPassword(password);
+        // datasource.setUrl(url);
+        // datasource.setValidationQuery("SELECT 1");
+        // datasource.setTestOnBorrow(true);
+        // jdbcTemplate = new JdbcTemplate(datasource);
+
         getRuntimeContext().addAccumulator("recordCount", recordCount);
+
         jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
         rowMapper = new EntryFindRowMapper();
     }
@@ -65,13 +80,11 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
     @Override
     public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
         counter = 0;
-        // System.out.println(query);
 
-        PreparedStatementCallback<Integer> callback = new
-            PreparedStatementCallback<Integer>() {
+        PreparedStatementCallback<Integer> callback = new PreparedStatementCallback<Integer>() {
             @Override
             public Integer doInPreparedStatement(final PreparedStatement pstmt) throws SQLException,
-            DataAccessException {
+                DataAccessException {
 
                 ResultSet rs = pstmt.executeQuery();
                 while (rs.next()) {
@@ -95,11 +108,14 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                  * leaks.
                  * Just as important is to set the fetchSize.
                  */
-                PreparedStatement ps =
-                    conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                PreparedStatement ps = conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY);
                 conn.setAutoCommit(false);
                 ps.setFetchSize(FETCH_SIZE);
-                ps.setQueryTimeout(600);
+                /*
+                 * Query time out in seconds (total of 100 minutes)
+                 */
+                ps.setQueryTimeout(60 * 100);
                 return ps;
             }
         };

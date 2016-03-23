@@ -27,7 +27,7 @@ import org.oclc.seek.flink.source.JDBCHadoopSource;
 /**
  *
  */
-public class DbToHdfsJob extends JobGeneric {
+public class DbHadoopStreamToHdfsJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -89,7 +89,7 @@ public class DbToHdfsJob extends JobGeneric {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        DbToHdfsJob job = new DbToHdfsJob();
+        DbHadoopStreamToHdfsJob job = new DbHadoopStreamToHdfsJob();
         job.init();
         job.execute(env);
     }

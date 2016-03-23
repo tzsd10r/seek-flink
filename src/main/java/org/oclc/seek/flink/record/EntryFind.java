@@ -22,6 +22,12 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class EntryFind implements BaseObject {
     private static final long serialVersionUID = 1L;
+    
+    /** the timestamp of the reading */
+    private long timestamp;
+    public long timestamp() {
+        return timestamp;
+    }
 
     /** Non Indexed fields */
     private Long optimisticLock;
@@ -1090,12 +1096,4 @@ public class EntryFind implements BaseObject {
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
-
-    // /**
-    // * @param json
-    // * @return an json record
-    // */
-    // public EntryFind fromJson(final String json) {
-    // return new Gson().fromJson(json, this.getClass());
-    // }
 }

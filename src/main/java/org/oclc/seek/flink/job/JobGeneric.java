@@ -121,33 +121,33 @@ public abstract class JobGeneric implements JobContract {
      * If LEVEL is empty (setting -DLOG.loggerName without level), it erases a previously set level and will inherit
      * from parent logger
      */
-    public static class SysPropLogbackConfigurator {
-        public static final String PROP_PREFIX = "LOG.";
-
-        public static void apply() {
-            System.getProperties().stringPropertyNames().stream().filter(name -> name.startsWith(PROP_PREFIX))
-                .forEach(SysPropLogbackConfigurator::applyProp);
-        }
-
-        // force static init. applySysPropsToLogback will be called only once
-        public static void applyOnce() {
-            OnceInitializer.emptyMethodToForceInit();
-        }
-
-        private static void applyProp(final String name) {
-            final String loggerName = name.substring(PROP_PREFIX.length());
-            final String levelStr = System.getProperty(name, "");
-            final Level level = Level.toLevel(levelStr, null);
-            ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
-        }
-
-        private static class OnceInitializer {
-            static {
-                apply();
-            }
-
-            static void emptyMethodToForceInit() {
-            };
-        }
-    }
+//    public static class SysPropLogbackConfigurator {
+//        public static final String PROP_PREFIX = "LOG.";
+//
+//        public static void apply() {
+//            System.getProperties().stringPropertyNames().stream().filter(name -> name.startsWith(PROP_PREFIX))
+//                .forEach(SysPropLogbackConfigurator::applyProp);
+//        }
+//
+//        // force static init. applySysPropsToLogback will be called only once
+//        public static void applyOnce() {
+//            OnceInitializer.emptyMethodToForceInit();
+//        }
+//
+//        private static void applyProp(final String name) {
+//            final String loggerName = name.substring(PROP_PREFIX.length());
+//            final String levelStr = System.getProperty(name, "");
+//            final Level level = Level.toLevel(levelStr, null);
+//            ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName)).setLevel(level);
+//        }
+//
+//        private static class OnceInitializer {
+//            static {
+//                apply();
+//            }
+//
+//            static void emptyMethodToForceInit() {
+//            }
+//        }
+//    }
 }

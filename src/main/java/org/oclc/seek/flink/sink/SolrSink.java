@@ -90,7 +90,10 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     }
 
     @Override
-    public void open(final Configuration configuration) {
+    public void open(final Configuration configuration) throws Exception {
+        super.open(configuration);
+        
+        
         this.solrClient = new CloudSolrClient(config.get(ZKHOSTS));
         solrClient.setDefaultCollection(config.get(COLLECTION));
 
@@ -101,15 +104,15 @@ public class SolrSink<T> extends RichSinkFunction<T> {
     public void invoke(final T obj) throws Exception {
         if (obj instanceof Iterable<?>) {
             Iterator<?> it = ((Iterable<?>) obj).iterator();
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Pushing " + Iterators.size(it) + " docs into Solr for collection: [{}]",
+            //if (LOGGER.isDebugEnabled()) {
+                LOGGER.info("Pushing " + Iterators.size(it) + " docs into Solr for collection: [{}]",
                     config.get(COLLECTION));
-            }
+            //}
             solrClient.addBeans(it);
         } else {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Pushing doc into Solr for collection: [{}] \n [{}] ", config.get(COLLECTION), obj);
-            }
+            //if (LOGGER.isDebugEnabled()) {
+                LOGGER.info("Pushing doc into Solr for collection: [{}] \n [{}] ", config.get(COLLECTION), obj);
+            //}
             solrClient.addBean(obj);
         }
 
