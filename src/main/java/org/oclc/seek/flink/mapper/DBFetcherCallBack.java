@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -25,7 +26,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  *
@@ -51,30 +51,29 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
         super.open(configuration);
 
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        getRuntimeContext().addAccumulator("recordCount", recordCount);
+        rowMapper = new EntryFindRowMapper();
 
-        // String driver = parameters.getRequired("db.driver");
+        String driver = parameters.getRequired("db.driver");
         String url = parameters.getRequired("db.url");
         String user = parameters.getRequired("db.user");
         String password = parameters.getRequired("db.password");
 
-        /*
-         * If instantiated BasicDataSource... the sessions are kept alive and don't go away.
-         * Need to figure what to do in order to have sessions closed.
-         */
+         BasicDataSource datasource = new BasicDataSource();
+         datasource.setDriverClassName(driver);
+         datasource.setUsername(user);
+         datasource.setPassword(password);
+         datasource.setUrl(url);
+         datasource.setDefaultQueryTimeout(7200);
+         datasource.setEnableAutoCommitOnReturn(false);
+         datasource.setMaxTotal(50);
+         datasource.setMaxIdle(2);
+         //datasource.setValidationQuery("SELECT 1");
+         //datasource.setTestOnBorrow(true);
+         
+         jdbcTemplate = new JdbcTemplate(datasource);
 
-        // BasicDataSource datasource = new BasicDataSource();
-        // datasource.setDriverClassName(driver);
-        // datasource.setUsername(user);
-        // datasource.setPassword(password);
-        // datasource.setUrl(url);
-        // datasource.setValidationQuery("SELECT 1");
-        // datasource.setTestOnBorrow(true);
-        // jdbcTemplate = new JdbcTemplate(datasource);
-
-        getRuntimeContext().addAccumulator("recordCount", recordCount);
-
-        jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-        rowMapper = new EntryFindRowMapper();
+        //jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
     }
 
     @Override
@@ -83,15 +82,18 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
 
         PreparedStatementCallback<Integer> callback = new PreparedStatementCallback<Integer>() {
             @Override
-            public Integer doInPreparedStatement(final PreparedStatement pstmt) throws SQLException,
+            public Integer doInPreparedStatement(final PreparedStatement ps) throws SQLException,
                 DataAccessException {
 
-                ResultSet rs = pstmt.executeQuery();
+                ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
                     collector.collect(rowMapper.mapRow(rs));
                     counter++;
                 }
+
                 rs.close();
+                ps.close();
+                
                 return counter;
             }
         };
@@ -102,23 +104,33 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                 /*
                  * These values make a big difference.
                  * Most default to ResultSet.TYPE_SCROLL_INSENSITIVE and ResultSet.CONCUR_READ_ONLY);
-                 * The culprit here is the TYPE_SCROLL_INSENSITIVE which is causing a memory leak when fetching
-                 * large amounts of data.
-                 * When replaced with TYPE_FORWARD_ONLY, the resources are better managed and... no more memory
-                 * leaks.
-                 * Just as important is to set the fetchSize.
+                 * 
+                 * The culprit here is the TYPE_SCROLL_INSENSITIVE which is causing a memory leak when fetching large
+                 * amounts of data.
+                 * 
+                 * When replaced with TYPE_FORWARD_ONLY, the resources are better managed and... no more memory leaks.
+                 * Just as important... is to set the fetchSize.
                  */
                 PreparedStatement ps = conn.prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY,
                     ResultSet.CONCUR_READ_ONLY);
                 conn.setAutoCommit(false);
+
                 ps.setFetchSize(FETCH_SIZE);
+
                 /*
-                 * Query time out in seconds (total of 100 minutes)
+                 * Query time out in seconds (total of 120 minutes)
                  */
-                ps.setQueryTimeout(60 * 100);
+                ps.setQueryTimeout(7200);
                 return ps;
             }
         };
+        
+        System.out.println("getMaxWaitMillis           : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxWaitMillis());
+        System.out.println("getMaxIdle                 : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxIdle());
+        System.out.println("getMaxConnLifetimeMillis   : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxConnLifetimeMillis());
+        System.out.println("getEnableAutoCommitOnReturn: " + ((BasicDataSource)jdbcTemplate.getDataSource()).getEnableAutoCommitOnReturn());
+        System.out.println("getDefaultQueryTimeout     : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultQueryTimeout());
+        System.out.println("getDefaultAutoCommit       : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultAutoCommit());
 
         Integer numberOfRecords = jdbcTemplate.execute(creator, callback);
         recordCount.add(numberOfRecords);

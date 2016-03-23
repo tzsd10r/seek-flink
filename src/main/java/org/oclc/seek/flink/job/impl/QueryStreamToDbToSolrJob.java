@@ -79,22 +79,26 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
 
         /*
-         * Is this rebalance REALLY important here??
+         * Is this rebalance REALLY important here?? NO... actually... it is better w/o, because the rebalance always
+         * has an impact on performance.
          */
-        DataStream<EntryFind> records = queries
-            .flatMap(new DBFetcherCallBack())
-            //.assignTimestamps(new ReadingsTimestampAssigner())
-            .rebalance()
+
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
+        // .assignTimestamps(new ReadingsTimestampAssigner())
             .name(DBFetcherCallBack.DESCRIPTION);
 
-        DataStream<String> jsonRecords = records
-            .map(new JsonTextParser<EntryFind>()).name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>()).name(JsonTextParser.DESCRIPTION);
 
         /*
-         * Is this rebalance REALLY important here???
+         * Is this rebalance REALLY important here??? NO... actually... it is better w/o, because the rebalance always
+         * has an impact on performance.
          */
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser()).rebalance()
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
             .name(DocumentParser.DESCRIPTION);
+
+//        if (parameterTool.getRequired("with").equalsIgnoreCase("1")) {
+//        } else {
+//        }
 
         /*
          * Windows can be defined on already partitioned KeyedStreams. Windows group the data in each key according to
@@ -120,17 +124,13 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          * pushes about 30K elements at a time... and the total time is about 15-20 mins less when compared to the
          * 2 second window
          */
+        DataStream<List<KbwcEntryDocument>> windowed = documents
+            .keyBy(new SolrKeySelector<KbwcEntryDocument, Object>()).timeWindow(Time.seconds(1))
+            .apply(new SolrTimeWindowList<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow>())
+            .rebalance().name(SolrTimeWindowList.DESCRIPTION);
 
-        if (parameterTool.getRequired("with").equalsIgnoreCase("1")) {
-            DataStream<List<KbwcEntryDocument>> windowed = documents
-                .keyBy(new SolrKeySelector<KbwcEntryDocument, Object>()).timeWindow(Time.seconds(1))
-                .apply(new SolrTimeWindowList<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow>())
-                .rebalance().name(SolrTimeWindowList.DESCRIPTION);
-
-            windowed.map(new RecordCounter()).addSink(new SolrSink<List<KbwcEntryDocument>>(configMap))
-                .name(SolrSink.DESCRIPTION);
-        } else {
-        }
+        windowed.map(new RecordCounter()).addSink(new SolrSink<List<KbwcEntryDocument>>(configMap))
+            .name(SolrSink.DESCRIPTION);
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
     }
@@ -204,15 +204,15 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
             collector.collect(list);
         }
     }
-    
-    public  class ReadingsTimestampAssigner implements TimestampExtractor<EntryFind> {
+
+    public class ReadingsTimestampAssigner implements TimestampExtractor<EntryFind> {
         private static final long serialVersionUID = 1L;
         /**
          * in milliseconds
          */
         private static final long MAX_DELAY_MS = 12000;
         private long maxTimestamp;
-        
+
         @Override
         public long extractTimestamp(EntryFind element, long currentTimestamp) {
             maxTimestamp = Math.max(maxTimestamp, element.timestamp());
