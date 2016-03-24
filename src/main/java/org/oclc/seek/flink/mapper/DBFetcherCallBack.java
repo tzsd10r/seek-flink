@@ -25,7 +25,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  *
@@ -49,31 +48,11 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
 
-        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         getRuntimeContext().addAccumulator("recordCount", recordCount);
         rowMapper = new EntryFindRowMapper();
 
-//        String driver = parameters.getRequired("db.driver");
-        String url = parameters.getRequired("db.url");
-        String user = parameters.getRequired("db.user");
-        String password = parameters.getRequired("db.password");
-
-//         BasicDataSource datasource = new BasicDataSource();
-//         datasource.setDriverClassName(driver);
-//         datasource.setUsername(user);
-//         datasource.setPassword(password);
-//         datasource.setUrl(url);
-//         datasource.setDefaultQueryTimeout(7200);
-//         datasource.setEnableAutoCommitOnReturn(false);
-//         datasource.setMaxTotal(50);
-//         datasource.setMaxIdle(2);
-//         datasource.setTestWhileIdle(true);
-//         datasource.setValidationQuery("SELECT 1");
-//         datasource.setTestOnBorrow(true);
-//        
-//         jdbcTemplate = new JdbcTemplate(datasource);
-
-        jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
+      //jdbcTemplate = DBFetcherUtility.createPoolableJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
+        jdbcTemplate = DBFetcherUtility.createJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
     }
 
     @Override

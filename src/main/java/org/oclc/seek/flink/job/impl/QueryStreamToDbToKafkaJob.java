@@ -18,28 +18,6 @@ import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.QueryLikeSource;
 
 /**
- * Here, you can start creating your execution plan for Flink.
- * <p>
- * Start with getting some data from the environment, as follows:
- *
- * <pre>
- * env.readTextFile(textPath);
- * </pre>
- *
- * ...then, transform the resulting DataStream<T> using operations like the following:
- * <p>
- * .filter() <br>
- * .flatMap() <br>
- * .join() <br>
- * .group()
- * <p>
- * ...and many more.
- * <p>
- * Have a look at the programming guide and examples:
- * <p>
- * http://flink.apache.org/docs/latest/programming_guide.html<br>
- * http://flink.apache.org/docs/latest/examples.html <br>
- * <p>
  * Note that the Kafka source/sink is expecting the following parameters to be set <br>
  * - "bootstrap.servers" (comma separated list of kafka brokers) <br>
  * - "zookeeper.connect" (comma separated list of zookeeper servers) <br>

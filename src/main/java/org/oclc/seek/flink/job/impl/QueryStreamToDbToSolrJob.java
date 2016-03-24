@@ -35,27 +35,7 @@ import org.oclc.seek.flink.sink.SolrSink;
 import org.oclc.seek.flink.source.QueryLikeSource;
 
 /**
- * Here, you can start creating your execution plan for Flink.
- * <p>
- * Start with getting some data from the environment, as follows:
- *
- * <pre>
- * env.readTextFile(textPath);
- * </pre>
- *
- * ...then, transform the resulting DataStream<T> using operations like the following:
- * <p>
- * .filter() <br>
- * .flatMap() <br>
- * .join() <br>
- * .group()
- * <p>
- * ...and many more.
- * <p>
- * Have a look at the programming guide and examples:
- * <p>
- * http://flink.apache.org/docs/latest/programming_guide.html<br>
- * http://flink.apache.org/docs/latest/examples.html <br>
+ * 
  */
 public class QueryStreamToDbToSolrJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -96,14 +76,15 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
                 .name(DBFetcherCallBack2.DESCRIPTION);
         }
 
-        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>()).name(ObjectToJsonTransformer.DESCRIPTION);
+        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>()).name(
+            ObjectToJsonTransformer.DESCRIPTION);
 
         /*
          * Is this rebalance REALLY important here??? NO... actually... it is better w/o, because the rebalance always
          * has an impact on performance.
          */
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new JsonToDocumentTransformer())
-            .name(JsonToDocumentTransformer.DESCRIPTION);
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new JsonToDocumentTransformer()).name(
+            JsonToDocumentTransformer.DESCRIPTION);
 
         /*
          * Windows can be defined on already partitioned KeyedStreams. Windows group the data in each key according to

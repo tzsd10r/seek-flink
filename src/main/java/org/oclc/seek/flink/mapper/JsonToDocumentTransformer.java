@@ -39,16 +39,12 @@ public class JsonToDocumentTransformer extends RichMapFunction<String, KbwcEntry
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
 
-        // String msg = "Using Groovy JsonSlurper!!!";
         ParameterTool parameterTool =
             (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
 
         if (parameterTool.getRequired("json.text.parser").equals("gson")) {
             gson = new Gson();
-            // msg = "Using Gson!!!";
         }
-
-        // System.out.println(msg);
     }
 
     @Override

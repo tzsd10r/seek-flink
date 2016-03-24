@@ -18,28 +18,7 @@ import org.oclc.seek.flink.sink.HdfsSink;
 import org.oclc.seek.flink.source.QueryLikeSource;
 
 /**
- * Here, you can start creating your execution plan for Flink.
- * <p>
- * Start with getting some data from the environment, as follows:
  *
- * <pre>
- * env.readTextFile(textPath);
- * </pre>
- *
- * ...then, transform the resulting DataStream<T> using operations like the following:
- * <p>
- * .filter() <br>
- * .flatMap() <br>
- * .join() <br>
- * .group()
- * <p>
- * ...and many more.
- * <p>
- * Have a look at the programming guide and examples:
- * <p>
- * http://flink.apache.org/docs/latest/programming_guide.html<br>
- * http://flink.apache.org/docs/latest/examples.html <br>
- * <p>
  */
 public class QueryStreamToDbToHdfsJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -57,18 +36,15 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<String> queries = env.addSource(new QueryLikeSource())
-            .name(QueryLikeSource.DESCRIPTION);
+        DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
 
-        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
-            .name(DBFetcherCallBack.DESCRIPTION);
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack()).name(DBFetcherCallBack.DESCRIPTION);
 
-        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>())
-            .name(ObjectToJsonTransformer.DESCRIPTION);
+        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>()).name(
+            ObjectToJsonTransformer.DESCRIPTION);
 
         String suffix = parameterTool.getRequired("db.table");
-        jsonRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
-        .name(HdfsSink.DESCRIPTION);
+        jsonRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink()).name(HdfsSink.DESCRIPTION);
 
         env.execute("Receives SQL queries... executes them and then writes to hdfs");
     }

@@ -23,7 +23,6 @@ import org.oclc.seek.flink.record.EntryFindRowMapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  *
@@ -48,36 +47,10 @@ public class DBFetcherCallBack2 extends RichFlatMapFunction<String, EntryFind> {
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
         getRuntimeContext().addAccumulator("recordCount", recordCount);
-        ParameterTool parameterTool = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         rowMapper = new EntryFindRowMapper();
-        this.jdbcTemplate = createJdbcTemplate(parameterTool);
-    }
-
-    /**
-     * @return
-     */
-    private JdbcTemplate createJdbcTemplate(ParameterTool parameterTool) {
-        //String driver = parameterTool.getRequired("db.driver");
-        String url = parameterTool.getRequired("db.url");
-        String user = parameterTool.getRequired("db.user");
-        String password = parameterTool.getRequired("db.password");
-
-        return new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-
-//        BasicDataSource datasource = new BasicDataSource();
-//        datasource.setDriverClassName(driver);
-//        datasource.setUsername(user);
-//        datasource.setPassword(password);
-//        datasource.setUrl(url);
-//        datasource.setDefaultQueryTimeout(7200);
-//        datasource.setEnableAutoCommitOnReturn(false);
-//        datasource.setMaxTotal(50);
-//        datasource.setMaxIdle(2);
-//        datasource.setTestWhileIdle(true);
-//        datasource.setValidationQuery("SELECT 1");
-//        datasource.setTestOnBorrow(true);
-//        
-//        return new JdbcTemplate(datasource);
+        
+      //jdbcTemplate = DBFetcherUtility.createPoolableJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
+        jdbcTemplate = DBFetcherUtility.createJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
     }
 
     @Override
