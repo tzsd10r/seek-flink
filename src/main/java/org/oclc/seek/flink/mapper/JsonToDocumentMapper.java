@@ -23,7 +23,7 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class DocumentParser extends RichMapFunction<String, KbwcEntryDocument> {
+public class JsonToDocumentMapper extends RichMapFunction<String, KbwcEntryDocument> {
     private static final long serialVersionUID = 1L;
     /**
      * Concise description of what this class does.
@@ -59,27 +59,4 @@ public class DocumentParser extends RichMapFunction<String, KbwcEntryDocument> {
 
         return (KbwcEntryDocument) new JsonSlurper().setType(JsonParserType.INDEX_OVERLAY).parseText(json);
     }
-
-    // @SuppressWarnings("unchecked")
-    // private static <T> T build(final GenericWritable input, final Class type) {
-    // if (input == null) {
-    // return null;
-    // }
-    // Gson g = new Gson();
-    // String s = g.toJson(input);
-    // return (T) g.fromJson(s, type);
-    // }
-    //
-    // public static <T> List<T> build(final List<? extends GenericWritable> efs, final T instance) {
-    // if (efs == null) {
-    // return null;
-    // }
-    // Gson g = new Gson();
-    // String s = g.toJson(efs);
-    // Type collectionType = new TypeToken<List<T>>() {
-    // }.getType();
-    // return g.fromJson(s, collectionType);
-    // // return g.fromJson(s, instance.getClass());
-    // }
-
 }

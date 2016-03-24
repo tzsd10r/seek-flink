@@ -15,7 +15,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.document.KbwcEntryDocument;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.DocumentParser;
+import org.oclc.seek.flink.mapper.JsonToDocumentMapper;
 import org.oclc.seek.flink.sink.SolrSink;
 import org.oclc.seek.flink.source.KafkaSource;
 
@@ -49,8 +49,8 @@ public class KafkaToSolrJob extends JobGeneric {
             env.addSource(new KafkaSource(suffix, parameterTool.getProperties()).getSource())
             .name(KafkaSource.DESCRIPTION);
 
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new DocumentParser())
-            .name(DocumentParser.DESCRIPTION);
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new JsonToDocumentMapper())
+            .name(JsonToDocumentMapper.DESCRIPTION);
 
         documents.addSink(new SolrSink<KbwcEntryDocument>(configMap))
         .name(SolrSink.DESCRIPTION);

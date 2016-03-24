@@ -14,7 +14,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.JsonTextParser;
+import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
 
@@ -38,8 +38,8 @@ public class DBHadoopBatchToHdfsJob extends JobGeneric {
             env.createInput(new JDBCHadoopSource(parameterTool).get())
             .name(JDBCHadoopSource.DESCRIPTION);
 
-        DataSet<String> jsonRecords = records.map(new JsonTextParser<Tuple2<LongWritable, DbInputRecord>>())
-            .name(JsonTextParser.DESCRIPTION);
+        DataSet<String> jsonRecords = records.map(new ObjectToJsonTransformer<Tuple2<LongWritable, DbInputRecord>>())
+            .name(ObjectToJsonTransformer.DESCRIPTION);
         // .rebalance();
 
         String path = parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"));

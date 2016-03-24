@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.JsonTextParser;
+import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
@@ -45,11 +45,11 @@ public class DbToKafkaJob extends JobGeneric {
 
         DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
             env.createInput(new JDBCHadoopSource(parameterTool).get())
-                // .map(new CountRecords<Tuple2<LongWritable, DbInputRecord>>())
+                // .map(new RecordsCounter<Tuple2<LongWritable, DbInputRecord>>())
             .name(JDBCHadoopSource.DESCRIPTION);
 
-        DataStream<String> jsonRecords = rawRecords.map(new JsonTextParser<Tuple2<LongWritable, DbInputRecord>>())
-            .name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = rawRecords.map(new ObjectToJsonTransformer<Tuple2<LongWritable, DbInputRecord>>())
+            .name(ObjectToJsonTransformer.DESCRIPTION);
 
         String suffix = parameterTool.getRequired("db.table");
         jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())

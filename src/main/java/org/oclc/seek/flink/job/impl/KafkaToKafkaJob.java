@@ -44,8 +44,8 @@ public class KafkaToKafkaJob extends JobGeneric {
             .name(KafkaSource.DESCRIPTION)
             .rebalance();
 
-        // DataStream<String> enrichedJsonRecords = jsonRecords.map(new CountRecords<String>())
-        // .name(CountRecords.DESCRIPTION);
+        // DataStream<String> enrichedJsonRecords = jsonRecords.map(new RecordsCounter<String>())
+        // .name(RecordsCounter.DESCRIPTION);
 
         jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
         .name(KafkaSink.DESCRIPTION);

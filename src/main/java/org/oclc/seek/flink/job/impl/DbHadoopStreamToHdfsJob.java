@@ -18,7 +18,7 @@ import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.JsonTextParser;
+import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.BaseObject;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.HdfsSink;
@@ -54,8 +54,8 @@ public class DbHadoopStreamToHdfsJob extends JobGeneric {
                 }
             }).name("Map db rows to objects");
 
-        DataStream<String> jsonRecords = mapped.map(new JsonTextParser<BaseObject>())
-            .name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = mapped.map(new ObjectToJsonTransformer<BaseObject>())
+            .name(ObjectToJsonTransformer.DESCRIPTION);
 
         DataStream<String> countRecords = jsonRecords.keyBy(0)
             .countWindow(1)

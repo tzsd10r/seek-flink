@@ -19,7 +19,7 @@ import com.google.gson.Gson;
 /**
  * @param <IN>
  */
-public class JsonTextParser<IN> extends RichMapFunction<IN, String> {
+public class ObjectToJsonTransformer<IN> extends RichMapFunction<IN, String> {
     private static final long serialVersionUID = 1L;
     /**
      * Concise description of what what this class does

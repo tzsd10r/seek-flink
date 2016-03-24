@@ -12,7 +12,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.mapper.DBFetcherCallBack;
-import org.oclc.seek.flink.mapper.JsonTextParser;
+import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.sink.HdfsSink;
 import org.oclc.seek.flink.source.QueryLikeSource;
@@ -59,19 +59,12 @@ public class QueryStreamToDbToHdfsJob extends JobGeneric {
 
         DataStream<String> queries = env.addSource(new QueryLikeSource())
             .name(QueryLikeSource.DESCRIPTION);
-        // DataStream<String> queries = env.addSource(new QueryOffsetSource())
-        // .name(QueryOffsetSource.DESCRIPTION);
 
-        /*
-         * The rebalance() method enforces the even distribution over all parallel instances for the task that will
-         * be executing on the DataStream produced here
-         */
         DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
-            .rebalance()
             .name(DBFetcherCallBack.DESCRIPTION);
 
-        DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>())
-            .name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>())
+            .name(ObjectToJsonTransformer.DESCRIPTION);
 
         String suffix = parameterTool.getRequired("db.table");
         jsonRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())

@@ -31,8 +31,6 @@ public class QueryOffsetSource extends RichSourceFunction<String> {
         this.split = parallelism;
     }
 
-    // final ScheduledExecutorService exec = Executors.newScheduledThreadPool(2);
-
     @Override
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);

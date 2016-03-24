@@ -16,7 +16,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.oclc.seek.flink.builder.DbInputRecordBuilder;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.JsonTextParser;
+import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.SolrSink;
 
@@ -53,8 +53,8 @@ public class SolrEmitterJob extends JobGeneric {
         // Streams json records every 10 ms
         DataStream<DbInputRecord> text = env.addSource(new SimpleStringGenerator());
 
-        DataStream<String> jsonRecords = text.map(new JsonTextParser<DbInputRecord>())
-            .name(JsonTextParser.DESCRIPTION);
+        DataStream<String> jsonRecords = text.map(new ObjectToJsonTransformer<DbInputRecord>())
+            .name(ObjectToJsonTransformer.DESCRIPTION);
 
         jsonRecords.addSink(new SolrSink<String>(config))
         .name(SolrSink.DESCRIPTION);
