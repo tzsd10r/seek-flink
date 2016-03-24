@@ -26,8 +26,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.document.KbwcEntryDocument;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.DBFetcherCallBack;
-import org.oclc.seek.flink.mapper.DBFetcherCallBack2;
+import org.oclc.seek.flink.mapper.DBFetcherResultSetExtractor;
 import org.oclc.seek.flink.mapper.JsonToDocumentTransformer;
 import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.EntryFind;
@@ -58,23 +57,18 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         Map<String, String> configMap = ImmutableMap.of(SolrSink.ZKHOSTS, zkHosts, SolrSink.COLLECTION, collection);
 
         DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
-        // DataStream<String> queries = env.addSource(new QueryOffsetSource(env.getParallelism()))
-        // .name(QueryOffsetSource.DESCRIPTION);
 
         /*
          * Is this rebalance REALLY important here?? NO... actually... it is better w/o, because the rebalance always
          * has an impact on performance.
          */
-        DataStream<EntryFind> records;
-        if (parameterTool.getRequired("with").equalsIgnoreCase("1")) {
-            records = queries.flatMap(new DBFetcherCallBack())
-            // .assignTimestamps(new ReadingsTimestampAssigner())
-                .name(DBFetcherCallBack.DESCRIPTION);
-        } else {
-            records = queries.flatMap(new DBFetcherCallBack2())
-            // .assignTimestamps(new ReadingsTimestampAssigner())
-                .name(DBFetcherCallBack2.DESCRIPTION);
-        }
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherResultSetExtractor())
+        // .assignTimestamps(new ReadingsTimestampAssigner())
+            .name(DBFetcherResultSetExtractor.DESCRIPTION);
+
+        // if (parameterTool.getRequired("with").equalsIgnoreCase("1")) {
+        // } else {
+        // }
 
         DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>()).name(
             ObjectToJsonTransformer.DESCRIPTION);
@@ -89,21 +83,18 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         /*
          * Windows can be defined on already partitioned KeyedStreams. Windows group the data in each key according to
          * some characteristic (e.g., the data that arrived within the last 5 seconds).
-         */
-        /*
+         * 
          * Windows group all the stream events according to some
          * characteristic (e.g., the data that arrived within the last 5 seconds).
          * WARNING: This is in many cases a non-parallel transformation. All records will be gathered in one task for
          * the windowAll operator.
-         */
-        /*
+         * 
          * Windows can be defined on regular (non-keyed) data streams using the windowAll transformation and grouping
          * all the stream events according to some characteristic (e.g., the data that arrived within the last 5
          * seconds). These windowed data streams have all the capabilities of keyed windowed data streams, BUT are
          * evaluated at a SINGLE TASK (and hence at a single computing node).
-         */
-        /*
-         * Is this rebalance REALLY important??? YES.
+         * 
+         * Is the rebalance REALLY important??? YES.
          * 
          * The rebalance() method enforces the even distribution over all parallel instances for the task that will
          * be executing on the DataStream produced before the rebalance() method. In this case... it affects the
@@ -225,6 +216,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
      */
     public static void main(final String[] args) throws Exception {
         System.setProperty("environment", "test");
+        System.setProperty("json.text.parser", "gson");
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         QueryStreamToDbToSolrJob job = new QueryStreamToDbToSolrJob();

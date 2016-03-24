@@ -17,7 +17,7 @@ import org.apache.flink.configuration.Configuration;
 /**
  * @param <T>
  */
-public class RecordsCounter<T> extends RichMapFunction<T, T> {
+public class RecordCounter<T> extends RichMapFunction<T, T> {
     private static final long serialVersionUID = 1L;
     /**
      * Concise description of what this class represents.

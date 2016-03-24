@@ -45,7 +45,7 @@ public class DbToKafkaJob extends JobGeneric {
 
         DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
             env.createInput(new JDBCHadoopSource(parameterTool).get())
-                // .map(new RecordsCounter<Tuple2<LongWritable, DbInputRecord>>())
+                // .map(new RecordCounter<Tuple2<LongWritable, DbInputRecord>>())
             .name(JDBCHadoopSource.DESCRIPTION);
 
         DataStream<String> jsonRecords = rawRecords.map(new ObjectToJsonTransformer<Tuple2<LongWritable, DbInputRecord>>())

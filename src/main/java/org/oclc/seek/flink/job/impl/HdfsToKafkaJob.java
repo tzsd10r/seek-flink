@@ -12,7 +12,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.FileMonitoringFunction.WatchType;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.RecordsCounter;
+import org.oclc.seek.flink.mapper.RecordCounter;
 import org.oclc.seek.flink.sink.KafkaSink;
 
 /**
@@ -36,7 +36,7 @@ public class HdfsToKafkaJob extends JobGeneric {
         String path = parameterTool.getRequired("fs.src.dir." + suffix);
 
         DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
-            .map(new RecordsCounter<String>()).name(RecordsCounter.DESCRIPTION);
+            .map(new RecordCounter<String>()).name(RecordCounter.DESCRIPTION);
 
         jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
         .name(KafkaSink.DESCRIPTION);
