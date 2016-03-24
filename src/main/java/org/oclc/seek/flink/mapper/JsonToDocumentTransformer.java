@@ -23,7 +23,7 @@ import com.google.gson.Gson;
 /**
  *
  */
-public class JsonToDocumentMapper extends RichMapFunction<String, KbwcEntryDocument> {
+public class JsonToDocumentTransformer extends RichMapFunction<String, KbwcEntryDocument> {
     private static final long serialVersionUID = 1L;
     /**
      * Concise description of what this class does.

@@ -28,7 +28,7 @@ import org.oclc.seek.flink.document.KbwcEntryDocument;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.mapper.DBFetcherCallBack;
 import org.oclc.seek.flink.mapper.DBFetcherCallBack2;
-import org.oclc.seek.flink.mapper.JsonToDocumentMapper;
+import org.oclc.seek.flink.mapper.JsonToDocumentTransformer;
 import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
 import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.sink.SolrSink;
@@ -102,8 +102,8 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
          * Is this rebalance REALLY important here??? NO... actually... it is better w/o, because the rebalance always
          * has an impact on performance.
          */
-        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new JsonToDocumentMapper())
-            .name(JsonToDocumentMapper.DESCRIPTION);
+        DataStream<KbwcEntryDocument> documents = jsonRecords.map(new JsonToDocumentTransformer())
+            .name(JsonToDocumentTransformer.DESCRIPTION);
 
         /*
          * Windows can be defined on already partitioned KeyedStreams. Windows group the data in each key according to
