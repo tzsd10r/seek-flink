@@ -26,7 +26,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.oclc.seek.flink.document.KbwcEntryDocument;
 import org.oclc.seek.flink.job.JobGeneric;
-import org.oclc.seek.flink.mapper.DBFetcherCallBack;
+import org.oclc.seek.flink.mapper.DBFetcherCallBack2;
 import org.oclc.seek.flink.mapper.DocumentParser;
 import org.oclc.seek.flink.mapper.JsonTextParser;
 import org.oclc.seek.flink.record.EntryFind;
@@ -71,22 +71,23 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
     public void execute(final StreamExecutionEnvironment env) throws Exception {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
-
+        
         String zkHosts = parameterTool.getRequired(SolrSink.ZKHOSTS);
         String collection = parameterTool.getRequired(SolrSink.COLLECTION);
         Map<String, String> configMap = ImmutableMap.of(SolrSink.ZKHOSTS, zkHosts, SolrSink.COLLECTION, collection);
 
         DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
+        //DataStream<String> queries = env.addSource(new QueryOffsetSource(env.getParallelism()))
+        //    .name(QueryOffsetSource.DESCRIPTION);
 
         /*
          * Is this rebalance REALLY important here?? NO... actually... it is better w/o, because the rebalance always
          * has an impact on performance.
          */
-
-        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack2())
         // .assignTimestamps(new ReadingsTimestampAssigner())
-            .name(DBFetcherCallBack.DESCRIPTION);
-
+            .name(DBFetcherCallBack2.DESCRIPTION);
+        
         DataStream<String> jsonRecords = records.map(new JsonTextParser<EntryFind>()).name(JsonTextParser.DESCRIPTION);
 
         /*

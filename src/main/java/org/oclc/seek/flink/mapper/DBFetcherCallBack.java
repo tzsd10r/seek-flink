@@ -13,7 +13,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -26,6 +25,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  *
@@ -35,13 +35,12 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
     /**
      * Concise description of what this class represents.
      */
-    public static final String DESCRIPTION = "Fetcher records from database using callback.";
+    public static final String DESCRIPTION = "Fetcher records from database using callback";
     private LongCounter recordCount = new LongCounter();
     private transient JdbcTemplate jdbcTemplate;
     private BaseObjectRowMapper<EntryFind> rowMapper;
     private int counter;
-
-    /*
+    /**
      * Note that anything else but Integer.MIN_VALUE has no effect on the MySQL driver
      */
     private static int FETCH_SIZE = Integer.MIN_VALUE;
@@ -54,26 +53,27 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
         getRuntimeContext().addAccumulator("recordCount", recordCount);
         rowMapper = new EntryFindRowMapper();
 
-        String driver = parameters.getRequired("db.driver");
+//        String driver = parameters.getRequired("db.driver");
         String url = parameters.getRequired("db.url");
         String user = parameters.getRequired("db.user");
         String password = parameters.getRequired("db.password");
 
-         BasicDataSource datasource = new BasicDataSource();
-         datasource.setDriverClassName(driver);
-         datasource.setUsername(user);
-         datasource.setPassword(password);
-         datasource.setUrl(url);
-         datasource.setDefaultQueryTimeout(7200);
-         datasource.setEnableAutoCommitOnReturn(false);
-         datasource.setMaxTotal(50);
-         datasource.setMaxIdle(2);
-         //datasource.setValidationQuery("SELECT 1");
-         //datasource.setTestOnBorrow(true);
-         
-         jdbcTemplate = new JdbcTemplate(datasource);
+//         BasicDataSource datasource = new BasicDataSource();
+//         datasource.setDriverClassName(driver);
+//         datasource.setUsername(user);
+//         datasource.setPassword(password);
+//         datasource.setUrl(url);
+//         datasource.setDefaultQueryTimeout(7200);
+//         datasource.setEnableAutoCommitOnReturn(false);
+//         datasource.setMaxTotal(50);
+//         datasource.setMaxIdle(2);
+//         datasource.setTestWhileIdle(true);
+//         datasource.setValidationQuery("SELECT 1");
+//         datasource.setTestOnBorrow(true);
+//        
+//         jdbcTemplate = new JdbcTemplate(datasource);
 
-        //jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
+        jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
     }
 
     @Override
@@ -92,6 +92,12 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                 }
 
                 rs.close();
+                /*
+                 * Do I really need to do ps.close()?????
+                 * I thought I needed this because the connections were staying in the database in 'sleep' mode... but
+                 * then found out that the wait_timeout variable is what really determines how long a connection will
+                 * stay in 'sleep' mode in the database.
+                 */
                 ps.close();
                 
                 return counter;
@@ -121,16 +127,17 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                  * Query time out in seconds (total of 120 minutes)
                  */
                 ps.setQueryTimeout(7200);
+                
                 return ps;
             }
         };
         
-        System.out.println("getMaxWaitMillis           : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxWaitMillis());
-        System.out.println("getMaxIdle                 : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxIdle());
-        System.out.println("getMaxConnLifetimeMillis   : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxConnLifetimeMillis());
-        System.out.println("getEnableAutoCommitOnReturn: " + ((BasicDataSource)jdbcTemplate.getDataSource()).getEnableAutoCommitOnReturn());
-        System.out.println("getDefaultQueryTimeout     : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultQueryTimeout());
-        System.out.println("getDefaultAutoCommit       : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultAutoCommit());
+//        System.out.println("getMaxWaitMillis           : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxWaitMillis());
+//        System.out.println("getMaxIdle                 : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxIdle());
+//        System.out.println("getMaxConnLifetimeMillis   : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxConnLifetimeMillis());
+//        System.out.println("getEnableAutoCommitOnReturn: " + ((BasicDataSource)jdbcTemplate.getDataSource()).getEnableAutoCommitOnReturn());
+//        System.out.println("getDefaultQueryTimeout     : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultQueryTimeout());
+//        System.out.println("getDefaultAutoCommit       : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultAutoCommit());
 
         Integer numberOfRecords = jdbcTemplate.execute(creator, callback);
         recordCount.add(numberOfRecords);

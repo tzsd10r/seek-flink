@@ -1,19 +1,13 @@
 /****************************************************************************************************************
- *
- *  Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
- *
- *  OCLC proprietary information: the enclosed materials contain
- *  proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
- *  any part to any third party or used by any person for any purpose, without written
- *  consent of OCLC, Inc.  Duplication of any portion of these  materials shall include his notice.
- *
+ * Copyright (c) 2016 OCLC, Inc. All Rights Reserved.
+ * OCLC proprietary information: the enclosed materials contain
+ * proprietary information of OCLC, Inc. and shall not be disclosed in whole or in
+ * any part to any third party or used by any person for any purpose, without written
+ * consent of OCLC, Inc. Duplication of any portion of these materials shall include his notice.
  ******************************************************************************************************************/
+
 package org.oclc.seek.flink.source;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
@@ -33,15 +27,17 @@ public class QueryOffsetSource extends RichSourceFunction<String> {
     private String table;
     private int split;
 
+    public QueryOffsetSource(int parallelism) {
+        this.split = parallelism;
+    }
+
     // final ScheduledExecutorService exec = Executors.newScheduledThreadPool(2);
 
     @Override
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
 
-        RuntimeContext ctx = getRuntimeContext();
-
-        ParameterTool parameters = (ParameterTool) ctx.getExecutionConfig().getGlobalJobParameters();
+        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
 
         String url = parameters.getRequired("db.url");
         String user = parameters.getRequired("db.user");
@@ -49,8 +45,6 @@ public class QueryOffsetSource extends RichSourceFunction<String> {
         table = parameters.getRequired("db.table");
 
         jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-
-        ctx.getNumberOfParallelSubtasks();
     }
 
     @Override
@@ -78,14 +72,14 @@ public class QueryOffsetSource extends RichSourceFunction<String> {
             if (i < mod) {
                 // System.out.println("what is chunk (" + chunk + " + " + 1 + ")  : " + (chunk + 1));
                 // System.out.println("what is offset (" + offset + " + " + i + "): " + (offset + i));
-                query = i + " : SELECT id FROM user LIMIT " + (chunk + 1) + " OFFSET " + (offset + i);
+                query = "SELECT * FROM " + table + " LIMIT " + (chunk + 1) + " OFFSET " + (offset + i);
             } else {
                 // System.out.println("what is chunk                             : " + chunk);
                 // System.out.println("what is offset (" + offset + " + " + mod + "): " + (offset + mod));
-                query = i + " : SELECT id FROM user LIMIT " + chunk + " OFFSET " + (offset + mod);
+                query = "SELECT * FROM " + table + " LIMIT " + chunk + " OFFSET " + (offset + mod);
             }
 
-            System.out.println(query);
+            System.out.println(i + " : " + query);
             ctx.collect(query);
             // System.out.println("------------------------------------------------");
 
@@ -100,7 +94,7 @@ public class QueryOffsetSource extends RichSourceFunction<String> {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        new QueryOffsetSource().run(null);
+        new QueryOffsetSource(20).run(null);
     }
 
     @Override

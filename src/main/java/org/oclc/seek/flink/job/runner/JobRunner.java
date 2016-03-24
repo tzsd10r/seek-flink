@@ -20,6 +20,7 @@ import org.oclc.seek.flink.job.impl.KafkaToConsoleJob;
 import org.oclc.seek.flink.job.impl.KafkaToHdfsJob;
 import org.oclc.seek.flink.job.impl.KafkaToKafkaJob;
 import org.oclc.seek.flink.job.impl.KafkaToSolrJob;
+import org.oclc.seek.flink.job.impl.QueryStreamJob;
 import org.oclc.seek.flink.job.impl.QueryStreamToDbToHdfsJob;
 import org.oclc.seek.flink.job.impl.QueryStreamToDbToKafkaJob;
 import org.oclc.seek.flink.job.impl.QueryStreamToDbToSolrJob;
@@ -111,6 +112,8 @@ public class JobRunner {
         s.append(QueryStreamToDbToSolrJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(QueryStreamToDbToHdfsJob.class.getSimpleName().toLowerCase());
+        s.append("\n");
+        s.append(QueryStreamJob.class.getSimpleName().toLowerCase());
         s.append("\n");
 
         System.out.println(s.toString());

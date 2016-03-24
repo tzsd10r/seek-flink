@@ -31,11 +31,14 @@ public class QueryLikeSource implements SourceFunction<String> {
         StringBuilder value;
         for (String h : hex) {
             for (String e : hex) {
+                for (String x : hex) {
                 value = new StringBuilder();
                 value.append(h);
                 value.append(e);
+                value.append(x);
                 ctx.collect("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
                 // System.out.println("SELECT * FROM entry_find WHERE id LIKE '" + value + "%'");
+                }
             }
         }
     }

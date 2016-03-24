@@ -8,9 +8,9 @@
 
 package org.oclc.seek.flink.mapper;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.apache.flink.api.common.accumulators.LongCounter;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
@@ -22,42 +22,47 @@ import org.oclc.seek.flink.record.EntryFind;
 import org.oclc.seek.flink.record.EntryFindRowMapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  *
  */
-public class DBFetcherResultSetExtractor extends RichFlatMapFunction<String, EntryFind> {
+public class DBFetcherCallBack2 extends RichFlatMapFunction<String, EntryFind> {
     private static final long serialVersionUID = 1L;
-    /**
-     * Concise description of what this class represents.
-     */
-    public static final String DESCRIPTION = "Fetcher records from database using result set extractor";
     private LongCounter recordCount = new LongCounter();
-    private transient JdbcTemplate jdbcTemplate;
     private BaseObjectRowMapper<EntryFind> rowMapper;
     private int counter;
     /**
      * Note that anything else but Integer.MIN_VALUE has no effect on the MySQL driver
      */
-    private static int FETCH_SIZE = Integer.MIN_VALUE;
+    private int FETCH_SIZE = Integer.MIN_VALUE;
+    private JdbcTemplate jdbcTemplate;
+    
+    /**
+     * Concise description of what this class represents.
+     */
+    public static final String DESCRIPTION = "Fetcher records from database using callback 2";
 
     @Override
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
-
-        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-
         getRuntimeContext().addAccumulator("recordCount", recordCount);
-
+        ParameterTool parameterTool = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         rowMapper = new EntryFindRowMapper();
-        
-//        String driver = parameters.getRequired("db.driver");
-        String url = parameters.getRequired("db.url");
-        String user = parameters.getRequired("db.user");
-        String password = parameters.getRequired("db.password");
+        this.jdbcTemplate = createJdbcTemplate(parameterTool);
+    }
+
+    /**
+     * @return
+     */
+    private JdbcTemplate createJdbcTemplate(ParameterTool parameterTool) {
+        //String driver = parameterTool.getRequired("db.driver");
+        String url = parameterTool.getRequired("db.url");
+        String user = parameterTool.getRequired("db.user");
+        String password = parameterTool.getRequired("db.password");
+
+        return new JdbcTemplate(new DriverManagerDataSource(url, user, password));
 
 //        BasicDataSource datasource = new BasicDataSource();
 //        datasource.setDriverClassName(driver);
@@ -71,38 +76,35 @@ public class DBFetcherResultSetExtractor extends RichFlatMapFunction<String, Ent
 //        datasource.setTestWhileIdle(true);
 //        datasource.setValidationQuery("SELECT 1");
 //        datasource.setTestOnBorrow(true);
-//
-//        jdbcTemplate = new JdbcTemplate(datasource);
-
-        jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-
+//        
+//        return new JdbcTemplate(datasource);
     }
 
     @Override
     public void flatMap(final String query, final Collector<EntryFind> collector) throws Exception {
         counter = 0;
 
-        Integer numberOfRecords = jdbcTemplate.query(query, new PreparedStatementSetter() {
+        StatementCallback<Integer> callback = new StatementCallback<Integer>() {
             @Override
-            public void setValues(final PreparedStatement ps) throws SQLException {
-                ps.getConnection().setAutoCommit(false);
-                ps.getConnection().prepareStatement(query, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-                ps.setFetchSize(FETCH_SIZE);
-                ps.setQueryTimeout(7200);
-            }
-        }, new ResultSetExtractor<Integer>() {
-            @Override
-            public Integer extractData(final ResultSet rs) throws SQLException, DataAccessException {
+            public Integer doInStatement(Statement st) throws SQLException, DataAccessException {
+                st = st.getConnection().createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                st.setFetchSize(FETCH_SIZE);
+
+                ResultSet rs = st.executeQuery(query);
+
                 while (rs.next()) {
                     collector.collect(rowMapper.mapRow(rs));
                     counter++;
                 }
+
                 rs.close();
-                
+                st.close();
+
                 return counter;
             }
-        });
+        };
 
+        Integer numberOfRecords = jdbcTemplate.execute(callback);
         recordCount.add(numberOfRecords);
     }
 }

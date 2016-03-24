@@ -54,7 +54,7 @@ public class DBFetcherItemReader extends RichFlatMapFunction<String, EntryFind> 
          */
         // reader.setFetchSize(FETCH_SIZE);
         reader.setRowMapper(new EntryFindRowMapper());
-        reader.setQueryTimeout(600);
+        reader.setQueryTimeout(7200);
     }
 
     @Override

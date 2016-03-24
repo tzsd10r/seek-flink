@@ -32,7 +32,11 @@ public class DBFetcherRowMapper extends RichFlatMapFunction<String, EntryFind> {
     private transient JdbcTemplate jdbcTemplate;
     private BaseObjectRowMapper<EntryFind> rowMapper;
     private long counter;
-
+    /**
+     * Note that anything else but Integer.MIN_VALUE has no effect on the MySQL driver
+     */
+    private int FETCH_SIZE = Integer.MIN_VALUE;
+    
     @Override
     public void open(final Configuration configuration) throws Exception {
         super.open(configuration);
@@ -40,14 +44,17 @@ public class DBFetcherRowMapper extends RichFlatMapFunction<String, EntryFind> {
         ParameterTool parameters =
             (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
 
+        getRuntimeContext().addAccumulator("recordCount", recordCount);
+
+        rowMapper = new EntryFindRowMapper();
+
         String url = parameters.getRequired("db.url");
         String user = parameters.getRequired("db.user");
         String password = parameters.getRequired("db.password");
 
-        getRuntimeContext().addAccumulator("recordCount", recordCount);
         jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, user, password));
-        jdbcTemplate.setQueryTimeout(600);
-        rowMapper = new EntryFindRowMapper();
+        jdbcTemplate.setQueryTimeout(7200);
+        jdbcTemplate.setFetchSize(FETCH_SIZE);
     }
 
     @Override
