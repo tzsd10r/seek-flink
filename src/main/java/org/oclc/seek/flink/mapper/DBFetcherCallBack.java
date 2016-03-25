@@ -71,13 +71,6 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                 }
 
                 rs.close();
-                /*
-                 * Do I really need to do ps.close()?????
-                 * I thought I needed this because the connections were staying in the database in 'sleep' mode... but
-                 * then found out that the wait_timeout variable is what really determines how long a connection will
-                 * stay in 'sleep' mode in the database.
-                 */
-                ps.close();
                 
                 return counter;
             }
@@ -110,13 +103,6 @@ public class DBFetcherCallBack extends RichFlatMapFunction<String, EntryFind> {
                 return ps;
             }
         };
-        
-//        System.out.println("getMaxWaitMillis           : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxWaitMillis());
-//        System.out.println("getMaxIdle                 : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxIdle());
-//        System.out.println("getMaxConnLifetimeMillis   : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getMaxConnLifetimeMillis());
-//        System.out.println("getEnableAutoCommitOnReturn: " + ((BasicDataSource)jdbcTemplate.getDataSource()).getEnableAutoCommitOnReturn());
-//        System.out.println("getDefaultQueryTimeout     : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultQueryTimeout());
-//        System.out.println("getDefaultAutoCommit       : " + ((BasicDataSource)jdbcTemplate.getDataSource()).getDefaultAutoCommit());
 
         Integer numberOfRecords = jdbcTemplate.execute(creator, callback);
         recordCount.add(numberOfRecords);

@@ -40,18 +40,15 @@ public class QueryStreamToDbToKafkaJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<String> queries = env.addSource(new QueryLikeSource())
-            .name(QueryLikeSource.DESCRIPTION);
+        DataStream<String> queries = env.addSource(new QueryLikeSource()).name(QueryLikeSource.DESCRIPTION);
 
-        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack())
-            .name(DBFetcherCallBack.DESCRIPTION);
+        DataStream<EntryFind> records = queries.flatMap(new DBFetcherCallBack()).name(DBFetcherCallBack.DESCRIPTION);
 
-        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>())
-            .name(ObjectToJsonTransformer.DESCRIPTION);
+        DataStream<String> jsonRecords = records.map(new ObjectToJsonTransformer<EntryFind>()).name(
+            ObjectToJsonTransformer.DESCRIPTION);
 
         String suffix = parameterTool.getRequired("db.table");
-        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
-        .name(KafkaSink.DESCRIPTION);
+        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink()).name(KafkaSink.DESCRIPTION);
 
         env.execute("Receives SQL queries... executes them and then writes to Kafka");
     }

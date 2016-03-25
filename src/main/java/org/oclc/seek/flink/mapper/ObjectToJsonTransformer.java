@@ -24,7 +24,7 @@ public class ObjectToJsonTransformer<IN> extends RichMapFunction<IN, String> {
     /**
      * Concise description of what what this class does
      */
-    public static final String DESCRIPTION = "Transforms an object into JSON text";
+    public static final String DESCRIPTION = "Transforms an object into JSON";
     /**
      * The default JSON parser is Gson.
      * The only other option at the moment is JsonSlurper (Groovy utility)

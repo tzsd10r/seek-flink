@@ -9,9 +9,7 @@
 package org.oclc.seek.flink.job.impl;
 
 import java.io.IOException;
-import java.util.Date;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -37,7 +35,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.oclc.seek.flink.job.JobGeneric;
 
 /**
- *
+ * Wordcount using map/reduce under the hood.
  */
 public class WordCountJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -89,7 +87,7 @@ public class WordCountJob extends JobGeneric {
         conf.writeXml(System.out);
 
         // Build path to output file
-        String millis = Long.toString(DateUtils.toCalendar(new Date()).getTimeInMillis());
+        //String millis = Long.toString(DateUtils.toCalendar(new Date()).getTimeInMillis());
         String filename = parameterTool.getRequired("fs.wordcount.output");
 
         FileOutputFormat.setOutputPath(job, new Path(filename));

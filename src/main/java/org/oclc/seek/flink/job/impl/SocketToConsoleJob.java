@@ -63,6 +63,8 @@ public class SocketToConsoleJob extends JobGeneric {
     public static void main(final String[] args) throws Exception {
         // StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        new SocketToConsoleJob().execute(env);
+        SocketToConsoleJob job = new SocketToConsoleJob();
+        job.init();
+        job.execute(env);
     }
 }
