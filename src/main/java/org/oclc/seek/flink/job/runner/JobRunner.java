@@ -25,7 +25,6 @@ import org.oclc.seek.flink.job.impl.QueryStreamToDbToHdfsJob;
 import org.oclc.seek.flink.job.impl.QueryStreamToDbToKafkaJob;
 import org.oclc.seek.flink.job.impl.QueryStreamToDbToSolrJob;
 import org.oclc.seek.flink.job.impl.SocketToConsoleJob;
-import org.oclc.seek.flink.job.impl.SolrEmitterJob;
 import org.oclc.seek.flink.job.impl.WordCountJob;
 import org.oclc.seek.flink.job.impl.wordcount.WordcountStreamingJob;
 import org.slf4j.Logger;
@@ -96,8 +95,6 @@ public class JobRunner {
         s.append(HdfsToKafkaJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(WordcountStreamingJob.class.getSimpleName().toLowerCase());
-        s.append("\n");
-        s.append(SolrEmitterJob.class.getSimpleName().toLowerCase());
         s.append("\n");
         s.append(DbHadoopStreamToHdfsJob.class.getSimpleName().toLowerCase());
         s.append("\n");

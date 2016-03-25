@@ -49,8 +49,8 @@ public class DBFetcherCallBack2 extends RichFlatMapFunction<String, EntryFind> {
         getRuntimeContext().addAccumulator("recordCount", recordCount);
         rowMapper = new EntryFindRowMapper();
         
-      //jdbcTemplate = DBFetcherUtility.createPoolableJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
         jdbcTemplate = DBFetcherUtility.createJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
+      //jdbcTemplate = DBFetcherUtility.createPoolableJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
     }
 
     @Override

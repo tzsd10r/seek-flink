@@ -51,8 +51,8 @@ public class DBFetcherResultSetExtractor extends RichFlatMapFunction<String, Ent
 
         rowMapper = new EntryFindRowMapper();
         
-        jdbcTemplate = DBFetcherUtility.createPoolableJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
-        //jdbcTemplate = DBFetcherUtility.createJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
+        jdbcTemplate = DBFetcherUtility.createJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
+        //jdbcTemplate = DBFetcherUtility.createPoolableJdbcTemplate((ParameterTool)getRuntimeContext().getExecutionConfig().getGlobalJobParameters());
     }
 
     @Override

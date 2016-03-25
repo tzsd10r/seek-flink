@@ -31,14 +31,15 @@ public class DBFetcherUtility {
         datasource.setUrl(url);
         datasource.setDefaultQueryTimeout(7200); // 120 minutes
         datasource.setEnableAutoCommitOnReturn(false);
-        datasource.setMaxTotal(100);
-        datasource.setMaxIdle(6);
+        datasource.setMaxTotal(50);
+        datasource.setMaxIdle(2);
         datasource.setTestWhileIdle(true);
         datasource.setValidationQuery("SELECT 1");
         datasource.setTestOnBorrow(true);
-        datasource.setMinEvictableIdleTimeMillis(120000); // 2 minutes
-        datasource.setTimeBetweenEvictionRunsMillis(120000); // 2 minutes
-        datasource.setMinIdle(2);
+        //datasource.setMinEvictableIdleTimeMillis(120000); // 2 minutes
+        //datasource.setTimeBetweenEvictionRunsMillis(120000); // 2 minutes
+        //datasource.setMinIdle(2);
+        //datasource.setMaxConnLifetimeMillis(3600000); // 60 minutes
 
         return new JdbcTemplate(datasource);
     }

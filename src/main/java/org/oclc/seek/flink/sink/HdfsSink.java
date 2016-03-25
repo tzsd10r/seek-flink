@@ -23,7 +23,7 @@ public class HdfsSink {
     /**
      * Concise description of what this class represents.
      */
-    public static final String DESCRIPTION = "Writes text to HDFS.";
+    public static final String DESCRIPTION = "Writes text to HDFS";
     /**
      * Generic property variable that represents the directory path
      */
