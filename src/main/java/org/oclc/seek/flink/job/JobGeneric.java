@@ -57,8 +57,12 @@ public abstract class JobGeneric implements JobContract {
         String jsonParser = System.getProperty("json.text.parser");
 
         if (StringUtils.isBlank(jsonParser) || !jsonParser.equals("gson") && !jsonParser.equals("groovy")) {
-            throw new RuntimeException(
-                "Must specify a parser... '-Djson.text.parser=groovy' or '-Djson.text.parser=gson'");
+            // throw new RuntimeException(
+            // "Must specify a parser... '-Djson.text.parser=groovy' or '-Djson.text.parser=gson'");
+            /*
+             * Make Gson the default
+             */
+            jsonParser = "gson";
         }
 
         props.put("json.text.parser", jsonParser);

@@ -66,7 +66,7 @@ public class HdfsSink {
     }
 
     private static String init(final String suffix, final Properties props) {
-        String path = props.getProperty(DIR);
+        String path = props.getProperty(suffix);
 
         if (path == null && valueIsValid(suffix)) {
             path = props.getProperty(DIR + "." + suffix);
@@ -74,5 +74,4 @@ public class HdfsSink {
 
         return path;
     }
-
 }

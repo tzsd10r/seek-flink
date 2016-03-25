@@ -9,23 +9,24 @@
 package org.oclc.seek.flink.job.impl;
 
 import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
-import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
-import org.apache.flink.util.Collector;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
+import org.oclc.seek.flink.mapper.RecordCounter;
 import org.oclc.seek.flink.record.BaseObject;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.HdfsSink;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
 
 /**
- *
+ * Uses the HadoopInputFormat type to define the source for the database.
+ * Under the hood... it uses map/reduce technology to fetch the rows from the database.
+ * Additionally, the Flink environment initialized here uses the Batch API.
+ * 
+ * NOTE: NOT WORKING PROPERLY!!! FOR SOME REASON... DB CONNECTIONS ARE MAXING OUT.
  */
 public class DbHadoopStreamToHdfsJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -40,12 +41,11 @@ public class DbHadoopStreamToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<Tuple2<LongWritable, DbInputRecord>> dbRows =
-            env.createInput(new JDBCHadoopSource(parameterTool).get())
-            .name(JDBCHadoopSource.DESCRIPTION);
+        DataStream<Tuple2<LongWritable, DbInputRecord>> dbRows = env.createInput(
+            new JDBCHadoopSource(parameterTool).get()).name(JDBCHadoopSource.DESCRIPTION);
 
-        DataStream<BaseObject> mapped = dbRows
-            .map(new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, BaseObject>() {
+        DataStream<BaseObject> mapped = dbRows.map(
+            new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, BaseObject>() {
                 private static final long serialVersionUID = 1L;
 
                 @Override
@@ -54,27 +54,15 @@ public class DbHadoopStreamToHdfsJob extends JobGeneric {
                 }
             }).name("Map db rows to objects");
 
-        DataStream<String> jsonRecords = mapped.map(new ObjectToJsonTransformer<BaseObject>())
-            .name(ObjectToJsonTransformer.DESCRIPTION);
-
-        DataStream<String> countRecords = jsonRecords.keyBy(0)
-            .countWindow(1)
-            .apply(new WindowFunction<String, String, Tuple, GlobalWindow>() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public void apply(final Tuple key, final GlobalWindow window,
-                    final Iterable<String> values,
-                    final Collector<String> collector) throws Exception {
-
-                    String value = values.iterator().next();
-                    collector.collect(value);
-                }
-            }).name("Count records using a window");
+        DataStream<String> jsonRecords = mapped.map(new ObjectToJsonTransformer<BaseObject>()).name(
+            ObjectToJsonTransformer.DESCRIPTION);
+        
+        DataStream<String> countedRecords = jsonRecords.map(new RecordCounter<String>())
+            .name(RecordCounter.DESCRIPTION);
 
         String suffix = parameterTool.getRequired("db.table");
-        countRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
-        .name(HdfsSink.DESCRIPTION);
+        countedRecords.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
+            .name(HdfsSink.DESCRIPTION);
 
         env.execute("Queries the DB and drops results onto the Filesystem");
     }

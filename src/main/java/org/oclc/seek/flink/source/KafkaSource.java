@@ -39,7 +39,7 @@ public class KafkaSource {
      * @param suffix
      */
     public KafkaSource(final String suffix, final Properties props) {
-        String topic = props.getProperty(TOPIC);
+        String topic = props.getProperty(suffix);
 
         if (topic == null && valueIsValid(suffix)) {
             topic = props.getProperty(TOPIC + "." + suffix);

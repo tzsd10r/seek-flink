@@ -19,7 +19,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.com.google.common.collect.ImmutableMap;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
@@ -109,7 +108,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
             .apply(new SolrTimeWindowList<KbwcEntryDocument, List<KbwcEntryDocument>, Object, TimeWindow>())
             .rebalance().name(SolrTimeWindowList.DESCRIPTION);
 
-        windowed.map(new RecordCounter()).addSink(new SolrSink<List<KbwcEntryDocument>>(configMap))
+        windowed.map(new SolrRecordCounter()).addSink(new SolrSink<List<KbwcEntryDocument>>(configMap))
             .name(SolrSink.DESCRIPTION);
 
         env.execute("Receives SQL queries... executes them and then writes to Solr");
@@ -118,7 +117,7 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
     /**
      *
      */
-    public class RecordCounter extends RichMapFunction<List<KbwcEntryDocument>, List<KbwcEntryDocument>> {
+    public class SolrRecordCounter extends RichMapFunction<List<KbwcEntryDocument>, List<KbwcEntryDocument>> {
         private static final long serialVersionUID = 1L;
         /**
          * Concise description of what this class represents.
@@ -185,30 +184,30 @@ public class QueryStreamToDbToSolrJob extends JobGeneric {
         }
     }
 
-    public class ReadingsTimestampAssigner implements TimestampExtractor<EntryFind> {
-        private static final long serialVersionUID = 1L;
-        /**
-         * in milliseconds
-         */
-        private static final long MAX_DELAY_MS = 12000;
-        private long maxTimestamp;
-
-        @Override
-        public long extractTimestamp(EntryFind element, long currentTimestamp) {
-            maxTimestamp = Math.max(maxTimestamp, element.timestamp());
-            return element.timestamp();
-        }
-
-        @Override
-        public long extractWatermark(EntryFind element, long currentTimestamp) {
-            return Long.MIN_VALUE;
-        }
-
-        @Override
-        public long getCurrentWatermark() {
-            return maxTimestamp - MAX_DELAY_MS;
-        }
-    }
+//    public class ReadingsTimestampAssigner implements TimestampExtractor<EntryFind> {
+//        private static final long serialVersionUID = 1L;
+//        /**
+//         * in milliseconds
+//         */
+//        private static final long MAX_DELAY_MS = 12000;
+//        private long maxTimestamp;
+//
+//        @Override
+//        public long extractTimestamp(EntryFind element, long currentTimestamp) {
+//            maxTimestamp = Math.max(maxTimestamp, element.timestamp());
+//            return element.timestamp();
+//        }
+//
+//        @Override
+//        public long extractWatermark(EntryFind element, long currentTimestamp) {
+//            return Long.MIN_VALUE;
+//        }
+//
+//        @Override
+//        public long getCurrentWatermark() {
+//            return maxTimestamp - MAX_DELAY_MS;
+//        }
+//    }
 
     /**
      * @param args

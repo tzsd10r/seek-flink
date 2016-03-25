@@ -8,18 +8,21 @@
 
 package org.oclc.seek.flink.job.impl;
 
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.hadoop.io.LongWritable;
 import org.oclc.seek.flink.job.JobGeneric;
 import org.oclc.seek.flink.mapper.ObjectToJsonTransformer;
+import org.oclc.seek.flink.mapper.RecordCounter;
+import org.oclc.seek.flink.record.BaseObject;
 import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
 
 /**
- *
+ *NOTE: NOT WORKING PROPERLY!!! FOR SOME REASON... DB CONNECTIONS ARE MAXING OUT.
  */
 public class DbToKafkaJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -34,21 +37,25 @@ public class DbToKafkaJob extends JobGeneric {
         // create a checkpoint every 1000 ms
         // env.enableCheckpointing(1000);
 
-        // set the timeout low to minimize latency
-        // env.setBufferTimeout(10);
-
-        // defines how many times the job is restarted after a failure
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataStream<Tuple2<LongWritable, DbInputRecord>> rawRecords =
+        DataStream<Tuple2<LongWritable, DbInputRecord>> dbRecords =
             env.createInput(new JDBCHadoopSource(parameterTool).get())
-                // .map(new RecordCounter<Tuple2<LongWritable, DbInputRecord>>())
             .name(JDBCHadoopSource.DESCRIPTION);
+        
+        DataStream<BaseObject> mapped = dbRecords.map(
+            new RichMapFunction<Tuple2<LongWritable, DbInputRecord>, BaseObject>() {
+                private static final long serialVersionUID = 1L;
 
-        DataStream<String> jsonRecords = rawRecords.map(new ObjectToJsonTransformer<Tuple2<LongWritable, DbInputRecord>>())
+                @Override
+                public BaseObject map(final Tuple2<LongWritable, DbInputRecord> tuple) throws Exception {
+                    return tuple.f1.getEntryFind();
+                }
+            }).name("Map db rows to objects");
+
+        DataStream<String> jsonRecords = mapped.map(new ObjectToJsonTransformer<BaseObject>())
+            .map(new RecordCounter<String>())
             .name(ObjectToJsonTransformer.DESCRIPTION);
 
         String suffix = parameterTool.getRequired("db.table");

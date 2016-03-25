@@ -11,6 +11,7 @@ package org.oclc.seek.flink.job.impl;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.oclc.seek.flink.job.JobGeneric;
+import org.oclc.seek.flink.mapper.RecordCounter;
 import org.oclc.seek.flink.sink.KafkaSink;
 import org.oclc.seek.flink.source.KafkaSource;
 
@@ -41,13 +42,10 @@ public class KafkaToKafkaJob extends JobGeneric {
 
         DataStream<String> jsonRecords =
             env.addSource(new KafkaSource(suffix, parameterTool.getProperties()).getSource())
-            .name(KafkaSource.DESCRIPTION)
-            .rebalance();
+            .map(new RecordCounter<String>())
+            .name(KafkaSource.DESCRIPTION);
 
-        // DataStream<String> enrichedJsonRecords = jsonRecords.map(new RecordCounter<String>())
-        // .name(RecordCounter.DESCRIPTION);
-
-        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
+        jsonRecords.addSink(new KafkaSink("kafka.stage.topic." + suffix, parameterTool.getProperties()).getSink())
         .name(KafkaSink.DESCRIPTION);
 
         env.execute("Read Events from Kafka Source and write to Kafka Stage");

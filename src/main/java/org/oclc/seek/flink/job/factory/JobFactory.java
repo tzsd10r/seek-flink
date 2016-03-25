@@ -62,15 +62,13 @@ public class JobFactory {
      */
     public static JobContract get(final String topologyName) throws InstantiationException,
     IllegalAccessException {
-        JobGeneric jobContract = null;
-
-        Class<?> topologyClass = topologies.get(topologyName);
+        Class<?> topologyClass = topologies.get(topologyName.toLowerCase());
 
         if (topologyClass == null) {
             throw new IllegalArgumentException("the requested topology is invalid... " + topologyName);
         }
 
-        jobContract = (JobGeneric) topologyClass.newInstance();
+        JobGeneric jobContract = (JobGeneric) topologyClass.newInstance();
 
         jobContract.init();
 

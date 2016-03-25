@@ -19,7 +19,12 @@ import org.oclc.seek.flink.record.DbInputRecord;
 import org.oclc.seek.flink.source.JDBCHadoopSource;
 
 /**
- *
+ * Uses the HadoopInputFormat type to define the source for the database.
+ * Under the hood... it uses map/reduce technology to fetch the rows from the database.
+ * 
+ * Additionally, the Flink environment initialized here uses the Batch API.
+ * 
+ * NOTE: NOT WORKING PROPERLY!!! FOR SOME REASON... DB CONNECTIONS ARE MAXING OUT.
  */
 public class DBHadoopBatchToHdfsJob extends JobGeneric {
     private static final long serialVersionUID = 1L;
@@ -34,17 +39,14 @@ public class DBHadoopBatchToHdfsJob extends JobGeneric {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        DataSet<Tuple2<LongWritable, DbInputRecord>> records =
-            env.createInput(new JDBCHadoopSource(parameterTool).get())
-            .name(JDBCHadoopSource.DESCRIPTION);
+        DataSet<Tuple2<LongWritable, DbInputRecord>> records = env.createInput(
+            new JDBCHadoopSource(parameterTool).get()).name(JDBCHadoopSource.DESCRIPTION);
 
         DataSet<String> jsonRecords = records.map(new ObjectToJsonTransformer<Tuple2<LongWritable, DbInputRecord>>())
             .name(ObjectToJsonTransformer.DESCRIPTION);
-        // .rebalance();
 
         String path = parameterTool.get("fs.sink.dir." + parameterTool.get("db.table"));
-        jsonRecords.writeAsText(path + "/entry-find.txt", WriteMode.OVERWRITE)
-        .name("filesystem sink");
+        jsonRecords.writeAsText(path + "/entry-find.txt", WriteMode.OVERWRITE).name("filesystem sink");
 
         env.execute("Fetch data from database and store on the Filesystem");
     }

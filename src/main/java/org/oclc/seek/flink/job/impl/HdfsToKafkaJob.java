@@ -38,8 +38,7 @@ public class HdfsToKafkaJob extends JobGeneric {
         DataStream<String> jsonRecords = env.readFileStream(path, 100, WatchType.ONLY_NEW_FILES)
             .map(new RecordCounter<String>()).name(RecordCounter.DESCRIPTION);
 
-        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink())
-        .name(KafkaSink.DESCRIPTION);
+        jsonRecords.addSink(new KafkaSink(suffix, parameterTool.getProperties()).getSink()).name(KafkaSink.DESCRIPTION);
 
         env.execute("Reads from HDFS and writes to Kafka");
     }

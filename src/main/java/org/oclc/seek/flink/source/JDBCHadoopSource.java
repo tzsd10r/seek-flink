@@ -56,9 +56,7 @@ public class JDBCHadoopSource {
             parameterTool.getRequired("db.table"),
             null,
             null,
-            new String[] {
-            parameterTool.getRequired("db.fields")
-        });
+            new String[] {"*"});
 
         HadoopInputFormat<LongWritable, DbInputRecord> hadoopInputFormat =
             new HadoopInputFormat<LongWritable, DbInputRecord>(
@@ -66,7 +64,7 @@ public class JDBCHadoopSource {
 
         // conf.setStrings("mapred.jdbc.input.count.query", "select count(*) from entry_find");
         // conf.setStrings("mapreduce.jdbc.input.count.query", "select count(*) from entry_find");
-        conf.setNumTasksToExecutePerJvm(1);
+        // conf.setNumTasksToExecutePerJvm(1);
 
         conf.setNumMapTasks(parameterTool.getInt("map.tasks", 10));
 

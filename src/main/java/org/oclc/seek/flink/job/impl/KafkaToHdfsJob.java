@@ -33,19 +33,16 @@ public class KafkaToHdfsJob extends JobGeneric {
         // create a checkpoint every 5 seconds
         env.enableCheckpointing(5000);
 
-        // defines how many times the job is restarted after a failure
-        // env.getConfig().setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 60000));
-
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(parameterTool);
 
-        String suffix = parameterTool.getRequired("db.table");
+        String property = "fs.stage.dir." + parameterTool.getRequired("db.table");
 
-        DataStream<String> events = env.addSource(new KafkaSource(suffix, parameterTool.getProperties()).getSource())
-            .name(KafkaSource.DESCRIPTION);
+        DataStream<String> events = env.addSource(
+            new KafkaSource(parameterTool.getRequired("db.table"), parameterTool.getProperties()).getSource()).name(
+            KafkaSource.DESCRIPTION);
 
-        events.addSink(new HdfsSink(suffix, parameterTool.getProperties()).getSink())
-        .name(HdfsSink.DESCRIPTION);
+        events.addSink(new HdfsSink(property, parameterTool.getProperties()).getSink()).name(HdfsSink.DESCRIPTION);
 
         env.execute("Read Events from Kafka and write to HDFS");
     }
